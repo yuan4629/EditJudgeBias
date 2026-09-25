@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edit-judge-bias"
+version = "1.0.0"
+description = "Counterfactual benchmark for bias in MLLM judges of instruction-based image editing"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Yuan Huang", email = "huangyuan4629@gmail.com" }]
+requires-python = ">=3.10"
+keywords = ["benchmark", "image editing", "MLLM-as-a-judge", "evaluation", "bias"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "pydantic>=2.5",
+    "PyYAML>=6.0",
+    "Pillow>=10.0",
+    "numpy>=1.26",
+    "scipy>=1.11",          # also required for byte-identical edit-region estimates
+    "scikit-image>=0.22",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+# Stage 1 (manifests): GenAI-Bench and MagicBrush come from the Hugging Face Hub.
+ingest = [
+    "pyarrow>=14.0",
+    "huggingface_hub>=0.30",
+]
+# Fairness track (D-S): person/skin masks (DeepLabV3) and colour screens.
+fairness = [
+    "opencv-python-headless>=4.8",
+    "torch>=2.0",
+    "torchvision>=0.15",
+]
+# Source-admission overlap gate (ORB/RANSAC near-duplicate detection).
+overlap = [
+    "opencv-python-headless>=4.8",
+]
+# Optional LPIPS / CLIP preservation metrics; everything degrades to SSIM without them.
+perceptual = [
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "lpips>=0.1.4",
+    "open_clip_torch>=2.20",
+]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/yuan4629/EditJudgeBias"
+Repository = "https://github.com/yuan4629/EditJudgeBias"
+Issues = "https://github.com/yuan4629/EditJudgeBias/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+# Make `src/` importable without an editable install, and keep test discovery scoped.
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["data", "results", "tmp_data"]
+
+[tool.ruff.lint]
+# Syntax errors, invalid comparisons, statement misuse and undefined names.
+select = ["E9", "F63", "F7", "F82"]

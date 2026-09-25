@@ -1,0 +1,11 @@
+# Region-annotation bias — full-version C1.
+# Needs the original image (edit_region localization); the runner supplies it.
+bias_type: region_annotation
+config:
+  mode: box              # "box" = red rectangle; "arrow" = arrow pointing at the edit
+  color: [255, 0, 0]
+  # Stroke width as a fraction of the short edge (3px at the 512px reference),
+  # so the annotation is equally prominent on 500px and 1024px images. Set
+  # `width_px` instead to pin an absolute value for an ablation.
+  width_ratio: 0.005859375
+  region_threshold: 15   # |edited-original| per-channel threshold for the region

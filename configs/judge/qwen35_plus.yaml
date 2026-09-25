@@ -1,0 +1,14 @@
+# Judge: qwen3.5-plus (closed; published panel).
+# Real network calls need `--use-api`; credentials come from EDITJUDGE_API_KEY and
+# EDITJUDGE_BASE_URL.
+type: openai
+model_name: qwen3.5-plus
+api_key_env: EDITJUDGE_API_KEY
+temperature: 0
+max_tokens: 1024
+timeout: 90
+max_retries: 4
+image_detail: low
+cache_dir: results/cache
+extra_params:
+  reasoning_effort: minimal   # disables thinking (~625 -> ~134 output tokens, clean JSON)

@@ -1,0 +1,8 @@
+# Distraction bias — full-version C4.
+# Pastes a seeded synthetic sticker OUTSIDE the edit region, area <= 4%.
+bias_type: distraction
+config:
+  max_area_frac: 0.04    # sticker area ceiling (fraction of the image)
+  margin_frac: 0.02
+  region_threshold: 15
+  # asset: star          # optional: pin a specific asset for a reproducible showcase

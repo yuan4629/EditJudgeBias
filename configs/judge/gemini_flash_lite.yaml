@@ -1,0 +1,16 @@
+# Judge: gemini-3.5-flash (closed; published panel).
+# Real network calls need `--use-api`; credentials come from EDITJUDGE_API_KEY and
+# EDITJUDGE_BASE_URL (any OpenAI-compatible /chat/completions endpoint).
+type: openai
+model_name: gemini-3.5-flash
+api_key_env: EDITJUDGE_API_KEY
+temperature: 0
+max_tokens: 2048        # The model spends ~350 tokens on reasoning that cannot be switched
+                        # off; with 1024 a few long prompts were truncated mid-JSON. A larger
+                        # cap cannot change an untruncated answer.
+timeout: 120            # Long enough for 3-image pairwise calls, so that a permanent refusal
+                        # (HTTP 400 PROHIBITED_CONTENT) surfaces as an error, not a timeout.
+max_retries: 4
+image_detail: low
+cache_dir: results/cache
+# No `reasoning_effort`: the endpoint ignored it for this model in every setting tried.

@@ -1,0 +1,17 @@
+# FILL v2 P4 -- validator C (glm-4v, NOT gating; the published third validator) -- OPTIONAL.
+# Same 880-row manifest and design as quality_validation_fill_v2_p4_gemini.yaml.
+# QC gating is the
+# intersection of validators A and B only, so this arm adds the section-6.1 disagreement
+# reading, not a gate. PAID (needs --use-api):
+#   PYTHONPATH=src python -m edit_judge_bias.experiments.run_quality_validation \
+#     --config configs/experiment/quality_validation_fill_v2_p4_glm4v.yaml --use-api
+samples: data/manifests/samples_full_v2.jsonl
+biased: data/manifests/quality_pair_members_fill_v2_p4.jsonl
+per_bias: 0
+seed: 42
+judge_config: configs/judge/glm4v.yaml
+raw_dir: results/v2_fill/raw_responses_validation
+out_manifest: results/v2_fill/quality/validation__glm-4v.jsonl
+summary_csv: results/v2_fill/metrics/quality_preservation_summary__p4_glm4v.csv
+failure_log: results/logs/fill_v2_p4_glm4v_failures.jsonl
+workers: 4

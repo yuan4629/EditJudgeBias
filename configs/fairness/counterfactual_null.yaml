@@ -1,0 +1,42 @@
+# ★ THE EDITOR RE-RENDER NULL CONTROL — D's analogue of `sham` + the retest arm.
+#
+# gpt-image-2 re-renders the whole frame, so asking it the SAME question about the SAME image
+# twice yields two different pictures. The judge-score spread between those two renders is
+# the floor that an attribute gap has to clear before it means anything. Reviewers ask for
+# this first, and without it D has no null.
+#
+# Scope: one attribute, one variant, 41 scenes = 41 extra renders ($2.46). The floor is a
+# property of the editor, not of the attribute, so it does not need the full cross-product;
+# `woman` is picked arbitrarily and that choice is recorded here rather than left implicit.
+#
+# ★★ `cache_dir: null` IS LOAD-BEARING AND THE RUNNER ENFORCES IT.
+# QwenImageEditClient caches on the SHA-256 of (model, prompt, size, image bytes)
+# (fairness/image_edit_client.py:104-126). A cached second render returns the FIRST image
+# byte for byte, so the measured floor would be exactly zero — fabricated, not measured.
+# `run_counterfactual_edit` raises if repeat > 1 and a cache_dir survives, the same guard the
+# scoring retest arm needed (run_scoring_judge.py:261-268).
+#
+# Note `repeat: 2` re-asks render 1 as well; render 1 is already on disk from
+# counterfactual_edit.yaml and resume skips it by `render_id`, so only the 41 second renders
+# are paid for. Run this AFTER counterfactual_edit.yaml.
+
+base_url: null                  # falls back to EDITJUDGE_BASE_URL
+model: gpt-image-2
+api_key_env: EDITJUDGE_API_KEY
+size: 1024x1024
+response_format: b64_json
+timeout: 120
+max_retries: 4
+
+attribute_edits: data/manifests/attribute_edits.jsonl
+only_attributes: [gender]
+only_variants: [woman]
+output_dir: data/images/counterfactual_edited
+manifest_out: data/manifests/counterfactual_edits.jsonl
+
+repeat: 2
+cache_dir: null          # load-bearing — see above
+failure_log: results/logs/counterfactual_edit_fail.jsonl
+
+# gpt-image-2 runs ~70s/call; serial would be 3+ hours for 164 renders.
+workers: 6

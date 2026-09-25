@@ -1,0 +1,24 @@
+# WP-A3 — `sham` matched-floor top-up, validator B (gpt-4o-mini, GATING).
+#
+# See `quality_validation_shammatch_v2.yaml` for the full rationale. This validator is
+# the one that carries the payload cell: its floor is 109/110, so a bare rate comparison
+# marked 9 of its 11 arms "below floor" on a one- or two-image difference, and its
+# `text_overlay` cell sits at q=0.050989 — 0.001 from flipping, with the two halves
+# being different pictures. The design notes work out the two-sided bound by hand:
+# the matched q lands somewhere in [0.02, 0.064], i.e. it straddles 0.05 and the data
+# is the only way to know. Either answer is publishable and both beat the status quo.
+#
+# On the 11 base images this arm and `sham` already share, the paired 2x2 is 10/11 pass
+# on BOTH sides with b=c=0 — McNemar undefined (`metrics/stats.py:87-98` returns None).
+# n=11 settles nothing, but it points at "these pictures are harder" rather than at
+# "text_overlay broke preservation", which is exactly the confound this arm removes.
+samples: data/manifests/samples_judge_v2.jsonl
+biased: data/manifests/biased_samples_shammatch_v2.jsonl
+per_bias: 0
+seed: 42
+judge_config: configs/judge/gpt4o_mini.yaml
+raw_dir: results/v2/raw_responses_validation
+out_manifest: results/v2/quality/validation__gpt-4o-mini.jsonl
+summary_csv: results/v2/metrics/quality_preservation_summary__shammatch_gpt4o_mini.csv
+failure_log: results/logs/quality_shammatch_gpt4o_mini_failures.jsonl
+workers: 8

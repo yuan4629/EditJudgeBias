@@ -1,0 +1,50 @@
+# Full-version bias injection — the 10 image biases (B6 + C4) plus the sham
+# control over the judging subset built by configs/data/full_v2.yaml.
+#
+# 1,196 samples x 11 = 13,156 biased images. Entirely local PIL work: no API
+# calls, no cost. Resumable — a re-run skips images that already exist, so raising
+# `judge_subset.per_source_per_edit_type`, adding an anchor block or adding a
+# bias later only injects the delta (the draw is a seeded prefix, so earlier
+# images stay valid).
+#
+# Injecting every bias over the whole subset is deliberate even though the anchor
+# arm only judges 4 of them: PIL work is free and judging is not, so what gets
+# *judged* is decided by each judge config's `subset_filter`, not here. That keeps
+# the option of extending an arm later without a re-injection pass.
+#
+# NOT injected here, by design:
+#   - `position`      — a pairwise-protocol bias (A/B order swap), no pixel change;
+#                       run_pairwise_judge handles it via include_position_swap.
+#   - `bandwagon` / `self_preference` — prompt-level (A-class) biases; they live in
+#                       the prompt builders, not the image pipeline.
+#   - D-class fairness biases (gender, skin_tone) — a separate track with its own
+#                       manifest, deliberately not mixed into the main benchmark.
+
+samples: data/manifests/samples_judge_v2.jsonl
+output_dir: data/images/biased
+manifest_out: data/manifests/biased_samples_full_v2.jsonl
+failure_log: results/logs/bias_injection_failures_full_v2.jsonl
+seed: 42
+
+biases:
+  # B-class: photometric / overlay edits on the whole frame.
+  - configs/bias/brightness.yaml
+  - configs/bias/saturation.yaml
+  - configs/bias/watermark.yaml
+  - configs/bias/text_overlay.yaml
+  - configs/bias/padding.yaml
+  - configs/bias/aesthetic_filter.yaml
+  # C-class: content overlays localised on the edit region. These call
+  # edit_region.estimate_edit_region, which uses the dataset mask when present
+  # (all 91 MagicBrush samples in the subset carry one) and otherwise falls back
+  # to an original-vs-edited diff, then to a centered box.
+  - configs/bias/region_annotation.yaml
+  - configs/bias/zoom_inset.yaml
+  - configs/bias/detail_caption.yaml
+  - configs/bias/distraction.yaml
+  # CONTROL, not a bias: a visually null re-encode (SSIM 0.9995 on this pool).
+  # Its measured shift is the equivalence bound the ten real biases are read
+  # against — the pilot's smallest real effect (-0.18) is the same order as the
+  # judges' own per-item absolute change (0.13-0.22), so without this arm there is
+  # no evidence that any effect exceeds the judge's own noise.
+  - configs/bias/sham.yaml

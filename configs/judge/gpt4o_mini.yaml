@@ -1,0 +1,19 @@
+# Quality-preservation validator (gating) -- NOT a judge.
+#
+# One of the two validators whose verdicts gate the QC subset (the other is
+# gemini-3.5-flash). Validators are separate MLLM calls and never take part in the main
+# evaluation. Independence from the panel is partial: gpt-4o-viescore on the panel is also
+# an OpenAI model (different model, different prompt).
+#
+# Calibration on visually null `sham` images (JPEG round trip, SSIM ~0.9995), which a
+# calibrated validator should pass at ~100%, was run before committing the arm; see the
+# preservation tables for each validator's own false-flag floor.
+type: openai
+model_name: gpt-4o-mini
+api_key_env: EDITJUDGE_API_KEY
+temperature: 0
+max_tokens: 1024
+timeout: 120
+max_retries: 4
+image_detail: low
+cache_dir: results/cache

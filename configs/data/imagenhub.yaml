@@ -1,0 +1,80 @@
+# ImagenHub (ICLR 2024, arXiv:2310.01596) ingestion config — full-version source B.
+#
+# Per-model edited images are NOT in the HF dataset; they live in the museum site
+# repo, one dir per model, 179 images each (see build_imagenhub.py docstring).
+# `git clone` is blocked on this machine, so files are pulled one-by-one over
+# plain HTTPS from raw.githubusercontent.com and cached on disk (resumable).
+
+source_dataset: ImagenHub
+
+museum:
+  repo: ChromAIca/ChromAIca.github.io
+  branch: main
+  subtree: Museum/ImagenHub_Text-Guided_IE
+  input_dir: input                 # original images live here (528 files; 179 used)
+  raw_base: https://raw.githubusercontent.com
+  # Cached GitHub tree listing. The unauthenticated API allows 60 req/hour, so
+  # this file is fetched at most ONCE and reused by every later build.
+  tree_cache: tmp_data/imagenhub_museum/tree_main.json
+
+# Pre-downloaded metadata (instructions + human ratings), committed by hand.
+meta_dir: tmp_data/imagenhub_meta
+lookup_json: dataset_lookup.json   # {uid: {instruction, source/target_global_caption}}
+lookup_csv: dataset_lookup.csv     # the 179 uids (same keys as lookup_json)
+rater_files: [rater1.tsv, rater2.tsv, rater3.tsv]
+
+# Which model dirs to ingest. First 8 = the rated models that also have images,
+# giving an external human anchor on `human_score` / `ground_truth_preference`;
+# last 4 = modern editors that widen the edit-quality range. Trivially editable.
+# NOTE: `Imagic` is rated but ships no image dir -> intentionally absent.
+# Also available (unrated, no images needed by default): CosXLEdit, FlowEdit_SD3,
+# FluxEdit, Gemini2NativeEdit, PNP.
+edit_models:
+  - CycleDiffusion
+  - DiffEdit
+  - InstructPix2Pix
+  - MagicBrush
+  - Pix2PixZero
+  - Prompt2prompt
+  - SDEdit
+  - Text2Live
+  - AURORA
+  - UltraEdit
+  - InfEdit
+  - RealEdit
+
+# The human reference edit; stored on SampleRecord.reference_image_path and never
+# judged as a model output. Set to null to skip downloading it.
+reference_model: GroundTruth
+
+images:
+  original_dir: data/images/original/imagenhub
+  edited_dir: data/images/edited/imagenhub
+
+download:
+  workers: 6         # be polite: small concurrency against raw.githubusercontent
+  retries: 3
+  timeout: 60
+
+# Optional seeded subsample of the 179 uids. null = keep all.
+sampling:
+  limit: null
+  seed: 42
+
+# ImagenHub ships NO edit-type label, so edit_type comes from the shared rules in
+# data/edit_type_rules.py. Coverage on this source is only ~64%: the instructions
+# are MagicBrush-style natural paraphrases ("let the woman cry", "Have the cow
+# wear a hat") that the current rule set does not cover. Unmatched rows land on
+# `default_edit_type` and the count is reported by BuildStats.n_edit_type_fallback.
+# `replace` is the least-wrong default: the tail is dominated by attribute/state
+# modifications of an existing object.
+default_edit_type: replace
+
+pairs:
+  seed: 42
+  max_pairs_per_group: 8   # 12 models -> 66 combinations/group; cap keeps it sane
+  tie_epsilon: 1.0e-9      # |human_score_a - human_score_b| below this = "tie"
+
+output:
+  samples: data/manifests/samples_imagenhub.jsonl
+  pairs: data/manifests/pairs_imagenhub.jsonl

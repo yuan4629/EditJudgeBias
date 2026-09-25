@@ -1,0 +1,24 @@
+# WP-A3 — `sham` matched-floor top-up, validator C (glm-4v, ordering cross-check only).
+#
+# See `quality_validation_shammatch_v2.yaml` for the full rationale. glm-4v does NOT
+# gate the QC subset (`scripts/05_compute_metrics.sh` passes only gemini and
+# gpt-4o-mini) because its own false-flag floor is 0.8636 — a 13.6% false-flag rate,
+# which would discard one image in seven at random.
+#
+# It is still worth matching, and this is the reason: `glm-4v x zoom_inset` = 0.7364 is
+# the ONLY cell in the whole study that fails the 85% gate, and WP-A2's re-injection did
+# not remove it (0.7182 -> 0.7364). A cell that has to be disclosed as a failure should
+# not also be confounded by "this validator saw a different set of pictures than its own
+# floor did". Its floor sits essentially ON the 85% gate, so the gate is near-degenerate
+# for it either way — the matched test says whether the arm is distinguishable from that
+# floor, which is a different and answerable question.
+samples: data/manifests/samples_judge_v2.jsonl
+biased: data/manifests/biased_samples_shammatch_v2.jsonl
+per_bias: 0
+seed: 42
+judge_config: configs/judge/glm4v.yaml
+raw_dir: results/v2/raw_responses_validation
+out_manifest: results/v2/quality/validation__glm-4v.jsonl
+summary_csv: results/v2/metrics/quality_preservation_summary__shammatch_glm4v.csv
+failure_log: results/logs/quality_shammatch_glm4v_failures.jsonl
+workers: 8

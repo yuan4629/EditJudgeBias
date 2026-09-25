@@ -1,0 +1,46 @@
+# FILL (2026-09-14) — the eight image conditions the pairwise one-sided arm never had,
+# injected over the same 1,086 pair members as `bias_injection_pair_members_v2.yaml`.
+# Free, local PIL work. Order of operations (each step idempotent):
+#
+#   PYTHONPATH=src python scripts/prepare_fill_injection.py snapshot   # BEFORE state of data/images/biased
+#   PYTHONPATH=src python scripts/prepare_fill_injection.py seed       # reuse the 239 shared members
+#   PYTHONPATH=src python -m edit_judge_bias.experiments.run_bias_injection \
+#       --config configs/experiment/bias_injection_pair_members_fill_v2.yaml
+#   PYTHONPATH=src python scripts/prepare_fill_injection.py audit      # acceptance; non-zero exit = stop
+#
+# WHY A NEW output_dir AND NOT data/images/biased/. The injector writes its output path
+# unconditionally: it does NOT skip images that already exist (the original pair-member
+# config says it does; `run_bias_injection` only skips ids already in its own output
+# manifest). Measured 2026-09-14: 334 of the 6,776 paths this run would write under
+# data/images/biased/ already hold PILOT images (2026-06-11; referenced by
+# biased_samples_pilot.jsonl / biased_samples_mini.jsonl; saturation + watermark on
+# I2EBench). Writing there would overwrite pilot evidence. New members therefore go to
+# data/images/biased_pair_fill/ and nothing under data/images/biased/ is written;
+# `audit` proves that against the snapshot.
+#
+# WHY 239 MEMBERS ARE NOT INJECTED. They are also in the scoring subset, so their eight
+# images already exist AS THE PUBLISHED STIMULI. `seed` copies those 1,912 records verbatim
+# from biased_samples_full_v2.jsonl, and resume skips them -- the same sharing the three
+# original pairwise cues use (717/717 overlapping records identical to the scoring
+# manifest). Sharing loses nothing: re-injecting 64 of those images with today's code
+# reproduced all 64 byte-for-byte, with identical params (measured 2026-09-14).
+#
+# No pair member ships a mask (EBench-18K 328 / I2EBench 267 / ImagenHub 249 /
+# GenAI-Bench 242; MagicBrush is not in this pool), so every C-class region is the
+# original-vs-edited diff and the WP-A2 mask-polarity defect cannot arise here.
+
+samples: data/manifests/samples_pair_members_v2.jsonl
+output_dir: data/images/biased_pair_fill
+manifest_out: data/manifests/biased_pair_members_fill_v2.jsonl
+failure_log: results/logs/bias_injection_failures_pair_members_fill_v2.jsonl
+seed: 42
+
+biases:
+  - configs/bias/saturation.yaml
+  - configs/bias/watermark.yaml
+  - configs/bias/aesthetic_filter.yaml
+  - configs/bias/region_annotation.yaml
+  - configs/bias/zoom_inset.yaml
+  - configs/bias/detail_caption.yaml
+  - configs/bias/distraction.yaml
+  - configs/bias/sham.yaml

@@ -1,0 +1,45 @@
+# FILL (2026-09-14) — the nine conditions ARM ③ (`scoring_anchor_v2.yaml`) never ran,
+# so claim B can be read over the whole roster instead of four cues.
+#
+# 624 anchor samples x 9 conditions, minus the 39 samples the breadth arm already judged
+# under all of them = 585 x 9 = 5,265 new calls per judge:
+#   7 image conditions: saturation / watermark / aesthetic_filter / zoom_inset /
+#     detail_caption / distraction / sham -- injected on 2026-07-26 (and re-injected by
+#     WP-A2 where the mask fix applied), so the pixels are the published stimuli
+#   2 prompt-level conditions: bandwagon, model_name -- the breadth arm's exact specs
+#
+# Collected ONLY through the fill orchestrator (configs/experiment/fill_v2.yaml).
+#
+# `score_original: false` -- all 624 baselines are on disk for every judge.
+# The 39 breadth-shared samples resolve to result_ids already in results/v2, so the
+# done-set skips them; nothing is asked twice.
+#
+# The prompt style comes from the judge where the judge declares one (gpt-4o-viescore ->
+# viescore), exactly as in the published arms: the orchestrator resolves it with
+# run_scoring_judge.resolve_prompt_style and never passes a CLI override.
+#
+# results/v2_fill for the reason given in pairwise_fill_v2.yaml.
+
+samples: data/manifests/samples_judge_v2.jsonl
+biased: data/manifests/biased_samples_full_v2.jsonl
+subset_filter:
+  anchor_source: [EBench-18K, ImagenHub]
+bias_types: [saturation, watermark, aesthetic_filter, zoom_inset, detail_caption,
+             distraction, sham]
+
+score_original: false
+score_biased: true
+prompt_style: vanilla
+score_scale: 10
+
+prompt_biases:
+  - bias_type: bandwagon          # A2, identical to scoring_breadth_v2.yaml
+    bandwagon: true
+  - bias_type: model_name         # A3, identical to scoring_breadth_v2.yaml
+    model_name_source: true_name
+
+judge_config: configs/judge/mock.yaml   # the orchestrator sets the judge per lane
+raw_dir: results/v2_fill/raw_responses
+results_dir: results/v2_fill
+failure_log: results/logs/fill_v2_failures.jsonl
+seed: 42

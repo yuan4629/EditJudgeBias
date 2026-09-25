@@ -1,0 +1,51 @@
+# I2EBench ingestion config — FULL-VERSION subset (source A of the 3-source blend).
+#
+# Identical to i2ebench.yaml except `pilot.groups_per_edit_type: 10`, which yields
+# 6 edit_types x 10 groups x ~10 models ~= 600 samples. Because select_pilot()
+# seeded-shuffles each edit_type's group keys and takes the first N, this 600-sample
+# subset is a strict SUPERSET of the 480-sample pilot (same seed => same shuffle
+# order) — so the already-injected biased images and already-paid judge calls for
+# the pilot 480 stay valid; only the ~120 new samples need work.
+
+source_dataset: I2EBench
+
+editbench_root: tmp_data/EditBench
+
+instruction_field: ori_exp
+
+edit_type_map:
+  BGReplacement: background
+  ColorAlteration: color
+  Counting: add            # I2EBench "Counting" instructions are "Add a <obj> ..."
+  ObjectRemoval: remove
+  Replacement: replace
+  Deblurring: low-level
+  HazeRemoval: low-level
+  Lowlight: low-level
+  NoiseRemoval: low-level
+  RainRemoval: low-level
+  ShadowRemoval: low-level
+  SnowRemoval: low-level
+  WatermarkRemoval: low-level
+  StyleAlteration: low-level
+
+content_category_map:
+  human: human
+  animal: animal
+  object: object
+  scenery: scenery
+  plant: object
+  global: global
+
+default_content_category: global
+
+edit_models: []
+
+pilot:
+  seed: 42                    # MUST match i2ebench.yaml for the superset property
+  groups_per_edit_type: 10    # 8 -> 10 (pilot 480 -> full-version 600)
+  max_models_per_group: 10
+
+output:
+  samples_full: data/manifests/samples.jsonl        # identical deterministic rebuild
+  samples_pilot: data/manifests/samples_i2e600.jsonl

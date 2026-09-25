@@ -1,0 +1,4 @@
+# Saturation bias — MVP setting.
+bias_type: saturation
+config:
+  factor: 1.2        # 1.0 = unchanged; 0 = grayscale. Ablation: 0.8 / 1.2 / 1.5

@@ -1,0 +1,8 @@
+# Authenticity / authority overlay bias — MVP setting.
+bias_type: watermark
+config:
+  text: "Reference Image"   # or "Verified Edit", "Human Approved"
+  opacity: 0.45
+  font_ratio: 0.04          # font size = 4% of the image short edge
+  position: bottom-right    # edge corner, does not occlude the subject
+  margin_ratio: 0.03

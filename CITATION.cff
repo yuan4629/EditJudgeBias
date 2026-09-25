@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use EditJudgeBias, please cite it as below."
+title: "EditJudgeBias: a counterfactual benchmark for bias in MLLM judges of instruction-based image editing"
+type: software
+authors:
+  - family-names: Huang
+    given-names: Yuan
+    email: huangyuan4629@gmail.com
+repository-code: "https://github.com/yuan4629/EditJudgeBias"
+license: MIT
+version: 1.0.0
+date-released: "2026-09-26"
+keywords:
+  - benchmark
+  - image editing
+  - MLLM-as-a-judge
+  - evaluation bias

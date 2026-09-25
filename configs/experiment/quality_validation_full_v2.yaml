@@ -1,0 +1,36 @@
+# ARM ⑤: quality-preservation validation over the full-version biased images.
+#
+# The whole research question is conditional on this: a bias effect only counts if
+# the bias provably did not change instruction adherence, editing quality or
+# detail preservation. The validator is a separate MLLM call with its own prompt
+# and never participates in the main scoring/pairwise grid.
+#
+# 11 biases x 110 = 1,210 calls. The C-class injectors (region_annotation,
+# zoom_inset, detail_caption, distraction) touch the edit region itself, so they
+# carry the highest risk of a real quality change and deserve the same per-bias
+# sample as the B-class ones rather than a token few.
+#
+# `sham` is in here as the validator's OWN positive control: a validator that does
+# not pass a visually null re-encode (SSIM 0.9995) at ~100% is miscalibrated, and
+# its verdicts on the ten real biases cannot be trusted either.
+#
+# Validator choice: gemini-3.5-flash also sits on the judge panel, so its verdicts
+# on gemini's own biased images are self-consistency rather than independent
+# validation. The pilot flagged this and the write-up must repeat it; a third
+# model would be a strict improvement if budget allows.
+
+samples: data/manifests/samples_judge_v2.jsonl
+biased: data/manifests/biased_samples_full_v2.jsonl
+per_bias: 110             # 0 = all
+seed: 42
+judge_config: configs/judge/gemini_flash_lite.yaml
+raw_dir: results/v2/raw_responses_validation
+# The filename must keep the `validation__` prefix: aggregate_results._passed_biased_ids
+# globs `validation__*.jsonl` to build the set of quality-passed biased_ids, and the
+# earlier name `validation_full_v2__...` did not match it — the QC table would have
+# been silently computed against the PILOT's passed ids instead. Isolation comes from
+# the results/v2 directory, not from the stem.
+out_manifest: results/v2/quality/validation__gemini-3.5-flash.jsonl
+summary_csv: results/v2/metrics/quality_preservation_summary.csv
+failure_log: results/logs/quality_validation_full_v2_failures.jsonl
+workers: 8

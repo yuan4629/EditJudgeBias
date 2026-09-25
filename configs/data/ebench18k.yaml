@@ -1,0 +1,106 @@
+# EBench-18K (paper: LMM4Edit) ingestion — the human-anchor source for claim B.
+#
+# Why this source: 18,360 edited images each carrying a 3-dimension MOS from 15
+# raters, on a *continuous* scale with no floor effect (measured: mean~50, sd~12,
+# 0 rows <=5 and 0 rows >=95, vs ImagenHub's SC being 70.5% floored at 0.0), and
+# the three dimensions map one-to-one onto our judge's three output fields.
+#
+# The MOS is a z-scored *relative* scale (every dimension is centred on 50), so it
+# supports RANK correlation only — never absolute comparison across sources. That
+# is exactly what claim B uses.
+
+source_dataset: EBench-18K
+id_prefix: ebench
+
+provenance:
+  venue: "ACM MM 2025 (proceedings, pp.6908-6917)"
+  doi: "10.1145/3746027.3755294"
+  arxiv: "2507.16193"
+  repo: "https://github.com/IntMeGroup/LMM4Edit"
+  label_source: "https://raw.githubusercontent.com/IntMeGroup/LMM4Edit/main/data/"
+  license: "not declared in the repo; usage rights obtained by the project owner 2026-07-25"
+  label_kind: human_rating          # humans RATED quality (not human-authored edits)
+  human_score_kind: human_rating
+  content_pool: "EBench-18K own pool for high-level; low-level SHARES upstream restoration
+    datasets (GoPro/LOL/CSD) with I2EBench -> see `contaminated` flags below"
+  overlap_report: data/provenance/overlap_ebench18k.json
+  editor_roster_size: 17
+  caveats:
+    - "model00..model16 are anonymous; the real editor names were never published,
+       so NO per-model claim may be made from this source."
+    - "Per-rater scores were not released, only aggregated MOS."
+    - "Each low-level task has exactly ONE templated instruction (8 distinct strings
+       across all 560 low-level rows) -> zero instruction diversity, state it in §9.4."
+    - "Released images are the 512x512 subjective-experiment version, not the
+       native >=1024 originals the paper describes."
+
+images_root: tmp_data/editing_all
+meta_dir: tmp_data/ebench_meta
+
+# Every dimension is split train/test upstream; we read both and join on image path.
+label_files:
+  mos_quality: [train_v.json, test_v.json]        # perceptual quality  -> editing_quality
+  mos_alignment: [train_e.json, test_e.json]      # editing alignment   -> instruction_adherence
+  mos_preservation: [train_c.json, test_c.json]   # attribute preservation -> detail_preservation
+  human_qa_pass: [train_yn.json, test_yn.json]    # task-specific Yes/No
+
+# Task index -> task name + edit_type. Task names were established from the
+# instruction text in the label files, NOT guessed: the paper's prose order for the
+# low-level tasks does not match the on-disk index order (04 is dehaze, not denoise).
+#
+# `edit_type: null` means the task is deliberately LEFT UNCLASSIFIED rather than
+# force-labelled — the same commitment as
+# tests/test_edit_type_rules.py::test_action_and_pose_edits_stay_unclassified.
+# Do NOT "fix" these by running the text rules: measured on EBench's own
+# instructions the rule classifier mislabels `color` 80% of the time (the
+# "Change the black hair to red hair" phrasing is captured by the replace rule
+# first) and misses `super-resolution` entirely.
+tasks:
+  H_00: {name: add, edit_type: add}
+  H_01: {name: remove, edit_type: remove}
+  H_02: {name: replace, edit_type: replace}
+  H_03: {name: color, edit_type: color}
+  H_04: {name: texture, edit_type: null}        # neither replace (object unchanged) nor color
+  H_05: {name: style, edit_type: low-level}     # precedent: i2ebench_600.yaml StyleAlteration
+  H_06: {name: action, edit_type: null}         # binding commitment: action stays unclassified
+  H_07: {name: expression, edit_type: null}     # same
+  H_08: {name: weather_season, edit_type: null} # global semantic change, not a low-level operation
+  H_09: {name: background, edit_type: background}
+  H_10: {name: counting, edit_type: null}       # instructions mix add/replace/remove
+  H_11: {name: position, edit_type: null}       # precedent: I2EBench DirectionPerception excluded
+  H_12: {name: size, edit_type: null}           # no cell in the 6-class taxonomy
+
+  # Contaminated flags come from a measured ORB+RANSAC check against I2EBench
+  # (source audit): the two datasets draw low-level content from the same
+  # upstream restoration corpora. GoPro is *video*, so adjacent frames match too —
+  # the measured 60% for deblur is a floor, not a ceiling. Excluded by default.
+  L_00: {name: deblur, edit_type: low-level, upstream: GoPro, contaminated: true}       # 60%
+  L_01: {name: denoise, edit_type: low-level, upstream: SSID}
+  L_02: {name: derain, edit_type: low-level, upstream: RainyDataset}
+  L_03: {name: desnow, edit_type: low-level, upstream: CSD, contaminated: true}         # 20%
+  L_04: {name: dehaze, edit_type: low-level, upstream: exBeDDE}
+  L_05: {name: lowlight, edit_type: low-level, upstream: LOL, contaminated: true}       # 14.3%
+  L_06: {name: shadow_removal, edit_type: low-level, upstream: ISTD}
+  L_07: {name: super_resolution, edit_type: low-level, upstream: web-downsampled}
+
+# Drop tasks whose originals overlap I2EBench. Set false only for an explicitly
+# labelled robustness appendix — never for the main table.
+exclude_contaminated: true
+
+# low-level and style are whole-image operations; the rest get the shared classifier.
+global_edit_types: [low-level]
+
+# 17 editors on every original means C(17,2)=136 candidate pairs per turn, so the
+# cap is what decides the manifest size, not the data. 8/turn keeps this source in
+# the same order of magnitude as the others while still handing the judge subset far
+# more human-ground-truth pairs than it can afford to run.
+pairs:
+  seed: 42
+  max_pairs_per_group: 8
+  # MOS is continuous, so an exact tie is a real (if rare) event rather than the
+  # rounding artefact it is on ImagenHub's 13-level scale.
+  tie_epsilon: 1.0e-9
+
+output:
+  samples_full: data/manifests/samples_ebench18k.jsonl
+  pairs_full: data/manifests/pairs_ebench18k.jsonl

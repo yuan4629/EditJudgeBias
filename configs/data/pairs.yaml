@@ -1,0 +1,13 @@
+# Pairwise manifest config (Milestone 1).
+# Pairs are formed within each (original image, instruction) group across
+# different edit_model outputs.
+
+seed: 42
+
+# Cap on unordered model-pairs emitted per group (C(10,2)=45 is the max with all
+# 10 models). 0 = no cap. Keeps the pilot balanced across groups.
+max_pairs_per_group: 8
+
+# How to enumerate pairs inside a group:
+#   combinations - every unordered distinct-model pair (default)
+strategy: combinations

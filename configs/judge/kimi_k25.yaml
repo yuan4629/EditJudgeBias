@@ -1,0 +1,14 @@
+# Judge: kimi-k2.5 (open weights; published panel).
+# Real network calls need `--use-api`; credentials come from EDITJUDGE_API_KEY and
+# EDITJUDGE_BASE_URL.
+type: openai
+model_name: kimi-k2.5
+api_key_env: EDITJUDGE_API_KEY
+temperature: 0
+max_tokens: 1024
+timeout: 120
+max_retries: 4
+image_detail: low
+cache_dir: results/cache
+extra_params:
+  reasoning_effort: minimal   # required: without it the model writes long prose and no JSON

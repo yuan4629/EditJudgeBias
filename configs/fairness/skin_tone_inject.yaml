@@ -1,0 +1,58 @@
+# D-S INJECTION — deterministic apparent-skin-lightness manipulation. ZERO API CALLS.
+#
+# 31 content-distinct scenes x 4 arms x 2 members = 248 images, cost $0.
+#
+# ★ THE ARMS
+#   dark / light    the study pair: -delta and +delta around the subject's OWN median ITA
+#   sham            the identical code path at delta = 0
+#   sham_nonskin    the same dose on the SAME PERSON's non-skin pixels (clothing / hair)
+#
+# Both controls are mandatory, not decoration:
+#   - `sham` is this project's established discipline. The A/B/C placebo (a visually null JPEG
+#     round trip, SSIM 0.9995) still moves 2 of 5 judges by +0.30 and +0.59 fine_score points,
+#     so "no perturbation" is not the same as "no response".
+#   - `sham_nonskin` is what separates a fairness result from an artefact measurement. This
+#     study has already measured that judges penalise local, readable pixel changes on 5/5
+#     judges, so a skin recolor could move scores because it IS a recolor. Recolouring the same
+#     subject's clothing with a matched dose is the only way to tell those apart. If the two
+#     effects come out comparable, G5 says report that and make NO fairness claim.
+#     ⚠️ Same PERSON, not "some background region of equal area": equal area is not equal
+#     saliency, so a background control estimates only a LOWER BOUND on the artefact penalty,
+#     and subtracting a lower bound inflates the residual one would then call bias.
+#
+# ★ delta_ita = 30, SYMMETRIC, and that is a correction of a real design flaw.
+# Sending one arm to Fitzpatrick I-II and the other to V-VI binds the perturbation MAGNITUDE
+# to the arm label: a subject at ITA 40 deg sits 15 deg from a light target but 70 deg from a
+# dark one, so the dark arm would carry ~4.7x the dose and part of any measured "gap" would
+# just be a gap in how much the image was disturbed. +-30 deg around the subject's own median
+# keeps the dose equal by construction and still crosses a Fitzpatrick bin (bins are 13-27 deg
+# wide). Measured on a real photo: dark -31.2 / light +29.8, mean dE00 8.93 vs 8.68 -- matched
+# to within 3%.
+#
+# ★ WHAT IS NOT ASKED OF AN MLLM ANY MORE
+# `scene_preserved` collapsed the previous gate (two auditors at Cohen's kappa +0.130 on
+# exactly that sub-question). Every injection here composites through a mask, so outside the
+# mask the output is the input's bytes verbatim, and `max_outside_diff` is written on every row
+# as the proof. Verified on a real photo: 0 on all 8 outputs of a scene.
+
+pool: data/manifests/samples_fairness_ds_v3.jsonl
+attribute: skin_tone
+
+delta_ita: 30.0
+include_sham: true
+include_sham_nonskin: true
+
+output_dir: data/images/fairness_ds
+manifest_out: data/manifests/attribute_injections.jsonl
+failure_log: results/logs/attribute_inject_fail.jsonl
+
+# The same region config the pool was screened with, so the masks are cache hits and the gate
+# later re-reads exactly the bytes the injection was built from. Changing any region key
+# changes `config_digest` and therefore the cache path -- a stale mask cannot be reused
+# silently.
+cache_dir: data/images/fairness_masks
+
+seed: 42
+
+# `only_roles: [study]` would collect just the two study arms. Left unset on purpose: a run
+# without its floors is not interpretable, and the floors cost nothing here.

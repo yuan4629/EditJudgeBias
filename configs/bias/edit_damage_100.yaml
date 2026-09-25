@@ -1,0 +1,13 @@
+# WP-A4a validator SENSITIVITY control — revert the edit region by 100%.
+#
+# NOT a bias and NOT a cue: this is the only injector in the package that deliberately
+# destroys editing quality. At severity 1.0 the edit region becomes the original image's
+# pixels, so the instruction was provably not carried out there — ground truth with no
+# rater in the loop. The ladder (25/50/100) turns "is the validator blind" into "how much
+# damage does it take", which is the number every "not significantly below the floor"
+# verdict in §5.7 needs standing beside it.
+bias_type: edit_damage_100
+config:
+  mode: revert
+  severity: 1.0
+  region_threshold: 15

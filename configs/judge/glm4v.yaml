@@ -1,0 +1,16 @@
+# Quality-preservation cross-check validator -- NOT a judge and NOT a QC gate.
+#
+# The only validator from a vendor family absent from the judge panel (Zhipu). Its
+# false-flag floor on visually null `sham` images is high (~21% on the calibration set), so
+# intersecting the QC subset with its verdicts would discard images at random. It is run and
+# reported against its OWN floor as a cross-check on the ordering of the cues, while the QC
+# gate (`aggregate_results --validators`) names only the two calibrated validators.
+type: openai
+model_name: glm-4v
+api_key_env: EDITJUDGE_API_KEY
+temperature: 0
+max_tokens: 1024
+timeout: 120
+max_retries: 4
+image_detail: low
+cache_dir: results/cache

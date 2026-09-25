@@ -1,0 +1,44 @@
+# WP-A4c — the C-class prompt ablation, main validator (gemini-3.5-flash).
+#
+# THE QUESTION.  The published validator template tells the model to treat certain
+# artefacts as cosmetic, and every named example is B-CLASS: "global
+# brightness/saturation shifts, borders, watermarks, and edge text bands".  The four
+# C-class overlays -- a box or arrow on the edit region, a magnified corner inset, a
+# caption bar, an off-region sticker -- are never named.  The template is therefore
+# harsher on C-class BY CONSTRUCTION.
+#
+# WHY IT IS NOW LOAD-BEARING RATHER THAN A FOOTNOTE.  Before WP-A3 no cue sat
+# significantly below its floor, so the asymmetry changed no conclusion.  After A3,
+# `zoom_inset` -- the largest C-class overlay -- is significantly below its floor on two
+# validators, and §7.1's "provability of preservation" axis was rewritten to
+# UNINTERPRETABLE because of exactly this: "the validator saw the inset and called the
+# content changed" and "the edit was destroyed" are observationally equivalent in the
+# current data.  This arm is the only thing that separates them.
+#
+# THE DESIGN.  Same 110 images per cue as the published run (`validator_draw.py
+# ablation-manifest` reuses `published_draw()`), same validator, same everything -- ONLY
+# `prompt_style` differs.  So the comparison is paired WITHIN each cue and a difference
+# is attributable to the prompt.
+# ⚠️ The four cues do NOT share base images with each other (that is the published
+# sampling defect A3 fixed for sham-vs-arm).  It does not matter here: the contrast is
+# default-vs-ablation within one cue, never cue-vs-cue.
+#
+# ⚠️ WRITES TO `results/v2_ablation/`, NEVER `results/v2/`.  These rows carry the SAME
+# `biased_id`s as the published verdicts; appending them to the published file would make
+# the runner's resume-by-biased_id skip them AND would silently mix two prompts in one
+# table that has no column to tell them apart.
+#
+# QUOTE: 440 calls x $0.0200 (measured) = ~$8.80.
+# gpt-4o-mini would cost ~$0.6, but 0.918 and the floor it is measured against are
+# gemini's numbers -- a cheaper validator answers a different question.
+samples: data/manifests/samples_judge_v2.jsonl
+biased: data/manifests/biased_samples_cclass_ablation.jsonl
+per_bias: 0
+seed: 42
+prompt_style: c_class_named
+judge_config: configs/judge/gemini_flash_lite.yaml
+raw_dir: results/v2_ablation/raw_responses_validation
+out_manifest: results/v2_ablation/quality/validation__gemini-3.5-flash.jsonl
+summary_csv: results/v2_ablation/metrics/quality_preservation_summary__cclass_ablation.csv
+failure_log: results/logs/quality_cclass_ablation_failures.jsonl
+workers: 8

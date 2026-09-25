@@ -1,0 +1,59 @@
+# ARM ①: the breadth block — claim A, "the judge is not invariant to a perturbation
+# that provably did not change editing quality".
+#
+# 611 samples x 14 conditions = 8,554 calls per judge. Run it once per judge:
+#
+#   for j in gpt5_5 gemini_flash_lite qwen35_plus kimi_k25 gpt4o_viescore; do
+#     python -m edit_judge_bias.experiments.run_scoring_judge \
+#       --config configs/experiment/scoring_breadth_v2.yaml \
+#       --judge-config configs/judge/$j.yaml --use-api
+#   done
+# (one shell command per judge — NEVER a bash loop over individual items; that
+# produced orphaned duplicate calls in the pilot.)
+#
+# The 14 conditions: 1 unbiased baseline + 10 image biases + 1 sham control + A2 +
+# A3. `sham` is a control, not a bias: its confidence interval is the equivalence
+# bound the other ten are read against.
+#
+# WHY subset_filter. The subset also holds two human-anchor blocks that are
+# deliberately single-source and deliberately unbalanced. Claim A's cross-source
+# analysis has to exclude them, so they get their own arm with 5 conditions rather
+# than 14. A sample drawn by BOTH mechanisms keeps `subset_block: breadth` and is
+# judged here; the anchor arm's conditions are a subset of these and share a
+# `result_id`, so the resume logic never pays for it twice.
+
+samples: data/manifests/samples_judge_v2.jsonl
+biased: data/manifests/biased_samples_full_v2.jsonl
+subset_filter:
+  subset_block: breadth
+
+score_original: true
+score_biased: true
+prompt_style: vanilla     # a true baseline: the anti-bias line lives in bias_aware
+score_scale: 10           # drives the prompt, the parser clamp and the stamped row
+
+# A-class (prompt-level) conditions: same image, different prompt text.
+prompt_biases:
+  - bias_type: bandwagon          # A2 — fabricated social proof
+    bandwagon: true
+  - bias_type: model_name         # A3 — the edit is attributed to its real generator
+    model_name_source: true_name
+
+judge_config: configs/judge/mock.yaml   # override per run with --judge-config
+
+# WHY results/v2 AND NOT results/. Measured, not hypothetical: the pilot's 480
+# samples and this 1,196-sample subset share 129 sample_ids, and result_id is
+# `score::{model}::{style}::{sample_id}` in both eras. Writing here would have made
+# the resume logic treat 129 baselines + 645 biased cells per judge as already done
+# and reuse the PILOT's 1-5 answers as 1-10 rows (they carry no `score_scale`, so
+# nothing downstream could tell). `save_raw_response` would also have overwritten
+# the pilot's raw .txt files for those ids. Separate trees, and `aggregate_results
+# --results-dir results/v2` then sees one scale and one era.
+# The response cache stays SHARED (results/cache) on purpose: a cache hit needs an
+# identical payload, so the 1-10 prompts cannot collide with the pilot's 1-5 ones,
+# while genuinely identical pairwise questions are still free.
+raw_dir: results/v2/raw_responses
+results_dir: results/v2
+failure_log: results/logs/scoring_breadth_v2_failures.jsonl
+seed: 42
+workers: 8

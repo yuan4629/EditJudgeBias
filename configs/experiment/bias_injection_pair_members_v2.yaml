@@ -1,0 +1,30 @@
+# Bias injection over the PAIR MEMBERS, for the pairwise one-sided conditions.
+#
+# The pairwise arm shows the judge (A, B) where exactly one side carries a bias.
+# PairRecord is self-contained and pairs are drawn independently of the scoring
+# subset, so most of these 1,086 members were never injected by
+# bias_injection_full_v2.yaml. Build the input manifest first:
+#
+#   python scripts/make_pair_member_manifest.py \
+#       --pairs data/manifests/pairs_judge_v2.jsonl \
+#       --pool  data/manifests/samples_full_v2.jsonl \
+#       --out   data/manifests/samples_pair_members_v2.jsonl
+#
+# Only the three biases that were significant on >=4 of the 5 pilot judges are
+# injected here. The pairwise grid costs 5 panel-passes per pair either way, so
+# spending them on the strongest cues buys a sharper test than spreading thin over
+# ten; the manifest can be extended later without re-injecting (seeded prefix).
+#
+# Members that the scoring subset already covers are listed anyway — the injector
+# skips images that exist, so it costs nothing and keeps this manifest complete.
+
+samples: data/manifests/samples_pair_members_v2.jsonl
+output_dir: data/images/biased
+manifest_out: data/manifests/biased_pair_members_v2.jsonl
+failure_log: results/logs/bias_injection_failures_pair_members_v2.jsonl
+seed: 42
+
+biases:
+  - configs/bias/padding.yaml        # strongest single-model effect in the pilot
+  - configs/bias/text_overlay.yaml   # only bias significant on BOTH pilot models
+  - configs/bias/brightness.yaml     # significant on 4/5 judges

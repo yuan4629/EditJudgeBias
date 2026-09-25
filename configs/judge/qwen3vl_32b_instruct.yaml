@@ -1,0 +1,17 @@
+# Replication judge: Qwen3-VL-32B-Instruct (open weights).
+#
+# Not part of the five-judge published panel. It is analysed as its own roster
+# (`--roster a5`, tables prefixed `a5_`) and must never be pooled with the panel into a
+# single multiple-testing family. It shares a vendor family with `qwen3.5-plus`, so any
+# agreement between the two is a within-family result.
+type: openai
+model_name: qwen3-vl-32b-instruct
+api_key_env: EDITJUDGE_API_KEY
+temperature: 0
+max_tokens: 1024
+timeout: 90
+max_retries: 4
+image_detail: low
+cache_dir: results/cache
+extra_params:
+  reasoning_effort: minimal   # same setting as qwen35_plus.yaml

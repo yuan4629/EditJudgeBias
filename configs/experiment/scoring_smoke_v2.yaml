@@ -1,0 +1,45 @@
+# Smoke batch: a small, paid end-to-end check of one judge endpoint before the full grid.
+#
+# It checks that
+#   1. the judge answers on the 1-10 scale and the parse succeeds;
+#   2. `fine_score` and `score_scale` land on disk, non-null;
+#   3. every condition type (image cues and prompt-level cues) survives a real call;
+#   4. the per-call price and latency are what you expect.
+#
+#   python -m edit_judge_bias.experiments.run_scoring_judge #     --config configs/experiment/scoring_smoke_v2.yaml #     --judge-config configs/judge/gpt5_5.yaml --use-api
+#
+# Why a config rather than `--limit`: `--limit` truncates AFTER the conditions are expanded
+# and targets are built baseline-first, so `--limit 84` would ask 84 baselines and no cue.
+# `max_samples` caps the SAMPLE list before expansion, so 6 samples x 14 conditions = 84
+# calls cover every condition.
+#
+# It is a deterministic subset of the breadth arm and writes the same result_ids into the
+# same tree, so the full run resumes over it and nothing is asked twice.
+
+samples: data/manifests/samples_judge_v2.jsonl
+biased: data/manifests/biased_samples_full_v2.jsonl
+subset_filter:
+  subset_block: breadth
+max_samples: 6
+# The manifest is laid out stratum by stratum, so a prefix of 6 would be 6 samples of one
+# source and one resolution; `spread` walks the whole block instead (price and latency
+# track image size, which ranges from 512x512 to 1024x1024).
+sample_pick: spread
+
+score_original: true
+score_biased: true
+prompt_style: vanilla
+score_scale: 10
+
+prompt_biases:
+  - bias_type: bandwagon
+    bandwagon: true
+  - bias_type: model_name
+    model_name_source: true_name
+
+judge_config: configs/judge/mock.yaml   # override per run with --judge-config
+raw_dir: results/v2/raw_responses
+results_dir: results/v2
+failure_log: results/logs/scoring_smoke_v2_failures.jsonl
+seed: 42
+workers: 4

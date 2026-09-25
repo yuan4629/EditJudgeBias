@@ -1,0 +1,15 @@
+# FILL v2 P4 -- validator B (gpt-4o-mini, GATING) on the fill's NEW pair-member images.
+# Same 880-row manifest and design as quality_validation_fill_v2_p4_gemini.yaml.
+# PAID (needs --use-api), after the gemini process has exited:
+#   PYTHONPATH=src python -m edit_judge_bias.experiments.run_quality_validation \
+#     --config configs/experiment/quality_validation_fill_v2_p4_gpt4o_mini.yaml --use-api
+samples: data/manifests/samples_full_v2.jsonl
+biased: data/manifests/quality_pair_members_fill_v2_p4.jsonl
+per_bias: 0
+seed: 42
+judge_config: configs/judge/gpt4o_mini.yaml
+raw_dir: results/v2_fill/raw_responses_validation
+out_manifest: results/v2_fill/quality/validation__gpt-4o-mini.jsonl
+summary_csv: results/v2_fill/metrics/quality_preservation_summary__p4_gpt4o_mini.csv
+failure_log: results/logs/fill_v2_p4_gpt4o_mini_failures.jsonl
+workers: 4

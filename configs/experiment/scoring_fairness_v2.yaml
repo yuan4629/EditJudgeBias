@@ -1,0 +1,45 @@
+# D-CLASS FAIRNESS SCORING ARM — the 5-judge panel over counterfactual pairs.
+#
+# Each item is an ordinary (counterfactual original, instruction, step-4 render) triple, so no
+# new judge code is needed. 41 content-distinct scenes x 2 attributes x 2 variants = 164 study
+# items, plus 41 null-control renders = 205 panel-passes at $0.03676 = $7.54.
+#
+# ★★ `results_dir` MUST STAY OUTSIDE `results/v2/`.
+# `judge_common.manifest_for` names the output file by task + model only
+# (`scoring__{model}.jsonl`), so pointing this at results/v2 would append fairness rows into
+# the SAME per-judge manifest as the main grid. The fairness sample_ids are new, so nothing
+# would collide *today* — but this project has already been bitten three times by exactly this
+# shape of shared-file assumption (the pilot/v2 result_id collision, the anchor arm polluting
+# the breadth tables, and retest repeats being read as baselines). Isolation is free; do not
+# trade it for tidiness.
+#
+# ⚠️ DO NOT pass `--prompt-style` when running gpt-4o-viescore over this arm.
+# `configs/judge/gpt4o_viescore.yaml` sets `scoring_prompt_style: viescore`, which outranks the
+# `prompt_style` below by design (run_scoring_judge.py:221). That is correct here: the §2.1
+# dedicated vision judge must keep its VIEScore rubric in the fairness arm too, or it stops
+# being the same judge that produced the claim A/B/C numbers.
+#
+# `score_biased: false` — there are no bias injections in D. The counterfactual IS the
+# manipulation, and it lives in the sample, not in a BiasedRecord.
+#
+# No `repeat`. The judge's own noise is already measured by the retest arm (§5), and D's
+# relevant floor is the EDITOR re-render null control, which subsumes judge noise and is the
+# stronger bound. Paying for judge repeats here would buy a weaker number twice.
+#
+# Run once per judge, never in a bash loop:
+#   python -m edit_judge_bias.experiments.run_scoring_judge \
+#     --config configs/experiment/scoring_fairness_v2.yaml \
+#     --judge-config configs/judge/gpt5_5.yaml --use-api
+
+samples: data/manifests/samples_fairness_judge_v2.jsonl
+score_original: true
+score_biased: false
+prompt_style: vanilla
+score_scale: 10
+
+judge_config: configs/judge/mock.yaml   # override per run with --judge-config
+raw_dir:     results/v2_fairness/raw_responses
+results_dir: results/v2_fairness
+failure_log: results/logs/scoring_fairness_v2_failures.jsonl
+seed: 42
+workers: 8

@@ -1,0 +1,79 @@
+# GenAI-Bench / GenAI-Arena `image_edition` ingestion (full-version source C).
+#
+# The only source in the blend that ships REAL HUMAN A/B VOTES
+# (TIGER-Lab/GenAI-Bench, CC-BY-4.0, NeurIPS 2024 D&B arXiv:2406.04485). Those
+# votes become PairRecord.ground_truth_preference, which is what lets §9 ask
+# whether an injected bias pushes an MLLM judge AWAY from human preference.
+#
+#   python -m edit_judge_bias.data.build_genaibench --config configs/data/genaibench.yaml --dry-run
+#   python -m edit_judge_bias.data.build_genaibench --config configs/data/genaibench.yaml
+
+source_dataset: GenAI-Bench
+id_prefix: gb
+
+hf:
+  repo_id: TIGER-Lab/GenAI-Bench
+  revision: 7981a194091d2201447f0c0e9cc4261dd5ad5846   # dataset commit the benchmark was built from
+  cache_dir: tmp_data/hf_cache
+  # `test` (983 rows) and `test_v1` (919 rows) both exist under image_edition/.
+  # Measured: 890 of test_v1's 899 distinct rows are already in `test`, so v1 is
+  # ~99% redundant and adds only ~9 new battles. We read `test` only. Adding v1
+  # here is safe (battles are keyed by content, so duplicates collapse) but buys
+  # almost nothing for ~98 MB more download.
+  files:
+    - image_edition/test-00000-of-00001.parquet
+  # --dry-run reads text columns over HTTP (kilobytes) instead of the 104 MB shard.
+  plan_over_http: true
+
+# Verified parquet schema (2026-07). Left/right are the two arena contestants.
+columns:
+  source_prompt: source_prompt
+  target_prompt: target_prompt
+  instruction: instruct_prompt
+  source_image: source_image
+  left_model: left_model
+  left_image: left_output_image
+  right_model: right_model
+  right_image: right_output_image
+  vote: vote_type
+
+# vote_type -> PairRecord.ground_truth_preference. Observed vocabulary and counts
+# in image_edition/test: bothbad_vote 404, rightvote 287, leftvote 268, tievote 24.
+# `null` = NOT a usable preference -> the row is dropped and counted.
+# "bothbad" means both outputs failed the instruction; it says nothing about
+# A vs B, so keeping it would corrupt the ground truth.
+vote_map:
+  leftvote: a
+  rightvote: b
+  tievote: tie
+  bothbad_vote: null
+
+# GenAI-Bench ships NO edit_type / content_category labels, so both are derived
+# from the instruction by the shared rules in data/edit_type_rules.py.
+# Measured rule coverage on the 560 usable battles is ~69% — below the 85% goal,
+# so this fallback is load-bearing and its count is reported by the builder.
+# `add` is the fallback because the unmatched tail is dominated by additive
+# phrasings the rules miss ("let a herd of sheep block the taxi", "Have the cow
+# wear a hat", "let the cup contain flowers"). Every fallback row is flagged in
+# SampleRecord.metadata.edit_type_rule_matched=false so §9.4 can exclude them.
+default_edit_type: add
+
+# Balanced, seeded subsample over battles (one battle = one PairRecord).
+# 560 usable battles; per_edit_type=200 caps the `add` bucket (which the fallback
+# inflates) and yields ~439 pairs, inside the 400-600 target. Raise per_edit_type
+# to null to keep all 560 — the seeded-shuffle contract makes the larger sample a
+# superset of the smaller one, so earlier injections/judgments stay valid.
+# `low-level` is absent by construction: GenAI-Arena editing prompts contain no
+# photometric restoration tasks (deblur/dehaze/derain).
+sampling:
+  seed: 42
+  per_edit_type: 200
+  max_total: 600
+
+images:
+  original_dir: data/images/original/genaibench
+  edited_dir: data/images/edited/genaibench
+
+output:
+  samples: data/manifests/samples_genaibench.jsonl
+  pairs: data/manifests/pairs_genaibench.jsonl

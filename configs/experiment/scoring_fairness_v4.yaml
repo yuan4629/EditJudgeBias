@@ -1,0 +1,61 @@
+# D-S FAIRNESS SCORING ARM (v4, deterministic ITA injection on OmniEdit) — the 5-judge panel.
+#
+# One item is an ordinary (original_variant, instruction, edited_variant) triple, so no new judge
+# code is needed. What differs from every other arm is that the two images of an item are the
+# SAME dataset edit with one byte-local recolour applied to both members, and the only thing that
+# separates the two items of a pair is which way that recolour went.
+#
+# Items = scenes x 4 arms (dark / light / sham / sham_nonskin), emitted by
+# `experiments.build_fairness_samples_ds`. At $0.03676 per panel-pass:
+#     n=200 ->   800 items -> $29     MDE 0.197 SD
+#     n=300 -> 1,200 items -> $44     MDE 0.161 SD
+#     n=611 -> 2,444 items -> $90     MDE 0.113 SD  (matches claim A's breadth block)
+# The pool is a seeded prefix, so a later k is a STRICT SUPERSET and staged spending wastes
+# nothing — run the small k first and top up.
+#
+# ★★ `results_dir` IS ITS OWN TREE AND MUST STAY THAT WAY.
+# `judge_common.manifest_for` names the output by task + model only (`scoring__{model}.jsonl`),
+# so pointing this at `results/v2` would append fairness rows into the main grid's per-judge
+# BASELINE manifest — D rows carry `bias_type=None` and would be filed as baselines, then read
+# wholesale by `aggregate_results`. Nothing would collide today (the sample_ids are new), which
+# is exactly the failure shape that has already bitten this project three times: the pilot/v2
+# result_id collision, the anchor arm polluting the breadth tables, and retest repeats being
+# read as baselines. It is also kept separate from `results/v2_fairness`, which belongs to the
+# STOPPED generative arm (different scenes, different editor, different validity argument).
+#
+# ⚠️ DO NOT pass `--prompt-style` when running gpt-4o-viescore over this arm.
+# `configs/judge/gpt4o_viescore.yaml` sets `scoring_prompt_style: viescore`, which outranks the
+# `prompt_style` below by design (run_scoring_judge.py:221). That is correct: the §2.1 dedicated
+# vision judge must keep its rubric here too, or it stops being the same judge that produced the
+# claim A/B/C numbers.
+#
+# `score_biased: false` — D has no BiasedRecord. The injected variant IS the manipulation and it
+# lives in the sample.
+#
+# NO `repeat`. The injection is deterministic, so there is no editor to re-run and no editor-noise
+# floor to buy: two renders of the same arm are the same file. The floors this arm does have are
+# the `sham` / `sham_nonskin` contrast (in-arm, already paid for) and the judges' own retest
+# numbers from §5. A `repeat` here would also trip the runner's warm-cache guard.
+#
+# ⚠️ Every image in this arm depicts a person. gemini-3.5-flash is the one judge observed to
+# return a permanent `PROHIBITED_CONTENT` refusal on the main grid; expect a non-zero refusal
+# rate and report this arm complete-case over the scenes present for all judges, as viescore
+# already is. Measure it with a 20-scene probe before committing the full k.
+#
+# Run once per judge, never in a bash loop (a loop produced orphaned duplicate calls in the pilot):
+#   python -m edit_judge_bias.experiments.run_scoring_judge \
+#     --config configs/experiment/scoring_fairness_v4.yaml \
+#     --judge-config configs/judge/gpt5_5.yaml --use-api
+
+samples: data/manifests/samples_fairness_ds_judge_v4.jsonl
+score_original: true
+score_biased: false
+prompt_style: vanilla
+score_scale: 10
+
+judge_config: configs/judge/mock.yaml   # override per run with --judge-config
+raw_dir:     results/v2_fairness_ds/raw_responses
+results_dir: results/v2_fairness_ds
+failure_log: results/logs/scoring_fairness_v4_failures.jsonl
+seed: 42
+workers: 8

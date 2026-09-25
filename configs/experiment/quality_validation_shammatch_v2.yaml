@@ -1,0 +1,35 @@
+# WP-A3 — `sham` matched-floor top-up, validator A (gemini-3.5-flash, GATING).
+#
+# WHAT THIS FIXES. `run_quality_validation._select` builds ONE `random.Random(seed)`
+# outside its loop (`:64`) and shuffles each bias bucket without resetting it (`:66-69`).
+# All 11 buckets are the same 1,196 base images, so the un-reset RNG is the *only* thing
+# that made the 11 draws differ — and it made them differ by 6-12%: `sham`'s 110 images
+# overlap each arm's 110 by only 7-13. Every "below the floor" verdict in
+# `quality_combined.csv` therefore mixes the arm's effect with "these pictures are
+# harder". The payload cell is `gpt-4o-mini x text_overlay`, q=0.051.
+#
+# WHY THIS CONFIG RATHER THAN A ONE-LINE CODE FIX. Moving the `Random(seed)` inside the
+# loop (design A) would give all 11 arms the same 110 images —
+# and invalidate the published pass rate of all ten arms, rewriting §5.7 wholesale for
+# roughly the same money. This is design C: keep every arm's 110 images exactly as
+# published, and top `sham` up to the UNION of them (737 base ids, of which 670 lack a
+# sham verdict). 670 calls per validator buys ten fully matched 110-vs-110 designs and
+# changes not one published number.
+#
+# `per_bias: 0` = take all; the manifest holds nothing but those 670 sham rows.
+# `out_manifest` points at the EXISTING published file on purpose: the runner resumes by
+# `biased_id` and appends, so the 110 sham rows already there are skipped, not re-paid.
+#
+# ⚠️ `summary_csv` MUST NOT be the published `quality_preservation_summary.csv`:
+# `run_quality_validation.py:114` overwrites that path, and it does so on `--dry-run`
+# too — so this runner must never be dry-run against a published summary either.
+samples: data/manifests/samples_judge_v2.jsonl
+biased: data/manifests/biased_samples_shammatch_v2.jsonl
+per_bias: 0
+seed: 42
+judge_config: configs/judge/gemini_flash_lite.yaml
+raw_dir: results/v2/raw_responses_validation
+out_manifest: results/v2/quality/validation__gemini-3.5-flash.jsonl
+summary_csv: results/v2/metrics/quality_preservation_summary__shammatch_gemini.csv
+failure_log: results/logs/quality_shammatch_gemini_failures.jsonl
+workers: 8

@@ -1,0 +1,37 @@
+# WP-A4a — render the validator SENSITIVITY control.
+#
+# 110 base samples x 4 damage conditions = 440 images. Zero cost, zero network.
+#
+# THE SUBSET IS THE `sham` ARM'S PUBLISHED DRAW, and that is the design. `sham` measures
+# each validator's specificity (its false-flag rate on a null perturbation: gemini 0.982,
+# gpt-4o-mini 0.991, glm-4v 0.864); these 440 measure its sensitivity (what it misses
+# when the edit is provably destroyed). On the SAME 110 pictures the two become a matched
+# pair describing one instrument, instead of two rates from two different draws — the
+# same argument WP-A3 makes for the matched floor one level up.
+#
+# ⚠️ output_dir is a SEPARATE tree. These images must never be reachable from an arm
+# config or a judge manifest: they are the one thing in this package that genuinely
+# lowers editing quality, and a single row of them inside claim A would be a cue that
+# really does deserve its score penalty sitting in a table whose whole premise is that no
+# cue does. `tests/test_edit_damage.py` asserts the bias type appears in no arm config
+# and in no published manifest.
+#
+# ⚠️ manifest_out is its own file for the same reason, and because `_load_done` reads it
+# to decide what to skip — pointing it at biased_samples_full_v2.jsonl would both pollute
+# the published manifest and make a re-run a silent no-op.
+#
+# seed 42 as everywhere else. `revert` is fully deterministic (it is an alpha blend of
+# two fixed images over an estimated bbox), so the seed changes nothing here; it stays 42
+# so the command is identical in shape to every other injection in the project.
+
+samples: data/manifests/samples_editdamage_v2.jsonl
+output_dir: data/images/control
+manifest_out: data/manifests/biased_samples_editdamage_v2.jsonl
+failure_log: results/logs/bias_injection_editdamage_v2_failures.jsonl
+seed: 42
+
+biases:
+  - configs/bias/edit_damage_100.yaml
+  - configs/bias/edit_damage_50.yaml
+  - configs/bias/edit_damage_25.yaml
+  - configs/bias/edit_damage_blur.yaml

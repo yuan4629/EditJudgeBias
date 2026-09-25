@@ -1,0 +1,45 @@
+# ARM ②: test-retest — the judge's own noise floor.
+#
+# Ask the identical unbiased question twice. At temperature 0 the answer is
+# supposed to be identical; the rate at which it is not is the floor every
+# reported effect has to clear. Without it, "padding costs 0.46 points" invites
+# the one-line rebuttal that nobody measured what the judge does when nothing
+# changes at all — and the pilot makes that rebuttal plausible: the judges' own
+# absolute per-item change (ASC) was 0.13-0.22, the same order as the smallest
+# real effect.
+#
+# 200 samples x 1 extra call = 200 NEW calls/judge, the cheapest defensible arm in
+# the grid. `max_samples` takes a deterministic prefix of the breadth block, and
+# the 200 first-pass baselines are already done by the breadth arm, so the resume
+# logic skips them and only the repeats are paid for.
+#
+#   python -m edit_judge_bias.experiments.run_scoring_judge \
+#     --config configs/experiment/scoring_retest_v2.yaml \
+#     --judge-config configs/judge/gpt5_5.yaml --use-api
+#
+# Run it AFTER the breadth arm, or it pays for both passes.
+#
+# THE CACHE MUST BE OFF. The adapter keys its cache on a hash of the request
+# payload, so the second identical ask would be served from disk and this arm
+# would report a variance of exactly zero — a noise floor manufactured by
+# plumbing. The runner refuses to start if `repeat > 1` and a cache_dir survives.
+
+samples: data/manifests/samples_judge_v2.jsonl
+subset_filter:
+  subset_block: breadth
+max_samples: 200
+
+score_original: true
+score_biased: false       # nothing is perturbed here; that is the point
+repeat: 2
+prompt_style: vanilla
+score_scale: 10
+
+judge_config: configs/judge/mock.yaml   # override per run with --judge-config
+judge_overrides:
+  cache_dir: null         # load-bearing — see above
+raw_dir: results/v2/raw_responses
+results_dir: results/v2
+failure_log: results/logs/scoring_retest_v2_failures.jsonl
+seed: 42
+workers: 8

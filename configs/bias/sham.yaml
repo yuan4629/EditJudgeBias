@@ -1,0 +1,12 @@
+# Sham / placebo perturbation — the noise floor arm, NOT a bias.
+#
+# Same pipeline, same manifest shape, new file, same picture. Its measured shift
+# is the equivalence bound every real bias effect is read against (pilot ASC was
+# 0.13-0.22, i.e. the same order as the smallest real effect, so this arm is what
+# makes "-0.18 is bigger than noise" a statement rather than an assumption).
+#
+# It is also the quality validator's positive control: a validator that does not
+# pass the sham at ~100% is miscalibrated on the real biases too.
+bias_type: sham
+config:
+  quality: 95        # JPEG round trip; measured SSIM 0.9995 (worst 0.9987) on the pool

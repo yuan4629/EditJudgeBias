@@ -1,0 +1,4 @@
+# Brightness bias — MVP setting.
+bias_type: brightness
+config:
+  factor: 1.2        # 1.0 = unchanged; >1 brighter. Ablation: 0.8 / 1.2 / 1.4

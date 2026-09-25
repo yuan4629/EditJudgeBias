@@ -1,0 +1,137 @@
+# D-S POOL v4 — the deterministic skin-lightness arm, rebuilt on OmniEdit. Zero API cost.
+#
+# ★ WHY A NEW POOL EXISTS AT ALL
+# `pool_ds.yaml` (v3) is not wrong; it is exhausted. It squeezed the five incumbent corpora and
+# got **31 scenes**, of which a human look found exactly **1** to be a genuine single-subject
+# skin-tone counterfactual (the others were a stadium crowd, hands on a guitar body, and so
+# on). The injector was never the problem -- it passed its arithmetic gate 31/31 with
+# byte-exact locality. The corpus was. Measured funnel over the 1,134 instruction-clean
+# incumbent originals: 131 have a person -> 37 have a face on that person -> 16 clear 2% of
+# frame -> **4** land in the usable framing band. That is a ceiling, not a threshold choice.
+#
+# So the same instrument was pointed at OmniEdit (ICLR 2025, MIT licence, LAION-5B +
+# OpenImages V6, zero contact with our three content pools). Measured over 18,958 rows:
+#     15,613 instruction-clean -> 5,953 person -> 3,605 face -> 2,594 face>=2% -> 1,378 in band
+#     -> 1,234 usable -> 1,022 after policy B -> **988 content-distinct scenes**
+#     yield 63.3 per 1,000 originals, versus 3.5 per 1,000 on the incumbent pools (18x)
+#
+# ★ WHY THE FRAMING BAND HAS AN UPPER BOUND HERE AND NOT IN v3
+# v3 never needed one: nothing in the incumbent corpora came close to a portrait crop. On a
+# corpus that does, `face_frac > 0.12` means the frame is a head and there is no scene left for
+# the editing instruction to act on -- the sample would fail construct validity from the other
+# direction. Both bounds are needed to state "single subject, head-and-shoulders to half-body".
+samples_paths:
+  - data/manifests/samples_omniedit_train_probe.jsonl
+
+out_path: data/manifests/samples_fairness_ds_v4.jsonl
+screens_out: results/v2_fairness/metrics/pool_screens_ds_v4.jsonl
+
+detector: true
+require_human_category: false      # the detector decides; the label is only reported
+
+# ★ BOTH are required for this arm, which is the combination v3's code could not express.
+# The face box places the subject in the framing band and anchors "whose skin tone"; the skin
+# fraction is what the injector actually recolours. v3 coupled them (`require_skin` defaulted
+# to `not require_face`), so asking for a band meant giving up the skin floor.
+require_face: true
+require_skin: true
+min_face_frac: 0.04                # half-body
+max_face_frac: 0.12                # head-and-shoulders; above this it is a portrait crop
+min_person_frac: 0.05
+min_skin_frac: 0.04
+
+# ★ NO UPPER SKIN BOUND. v3 used `max_skin_frac: 0.08`, and that number was CORPUS-SPECIFIC:
+# it existed to catch masks that had spilled onto wood, tan uniforms and grandstands. On a
+# corpus of actual single subjects the legitimate skin share sits near 0.11 -- the six in-band
+# incumbent scenes had a median `skin_frac` of 0.112, i.e. the old cap would have rejected the
+# very samples it was meant to keep. Its job is done properly by `skin_mask(require_person=True)`
+# (skin is a subset of the person mask by construction) plus the single-subject check below.
+max_skin_frac: 1.0
+max_person_components: 2
+
+# OFF: geometric alignment exists so the GENERATIVE arm can composite one rendered patch into
+# both members. This arm recolours each member through its own mask and has no such need.
+check_alignment: false
+
+# ORB content dedupe. Removed 34 of 1,022 here (OmniEdit rows are already one photo per row,
+# unlike GenAI-Bench which ships hash-named copies of MagicBrush base images). The instrument
+# self-validates against a self-match before any verdict is believed.
+threshold: 60
+
+# ★ ON HERE, OFF EVERYWHERE ELSE (added 2026-08-01 by the OmniEdit A8 gate).
+# That gate produced the project's first 7 ORB hits above 50 inliers and ALL SEVEN were false
+# positives — every one against a low-texture incumbent image (a dark kitchen drawer, a hazy
+# cityscape, a white dog in snow), where too few keypoints degenerate the ratio test and
+# `findHomography` returns a rank-deficient fit: |det H| = 0.000, inlier hull 0.0% of side B.
+# ⚠️ A keypoint-count floor alone missed 2 of the 7; all three checks are needed together.
+# It matters HERE more than in the provenance gate: a spurious match MERGES two distinct
+# scenes, so the pool loses n in exactly the way a real duplicate does and the count cannot
+# tell them apart. Left off by default so published pools reproduce byte-for-byte.
+orb_screen_degenerate: true
+
+# ★ OPERATOR COLLISION — POLICY B (user decision 2026-07-31), on the dataset's OWN task label.
+# Measured on OmniEdit, edit region vs skin mask:
+#     style                  n=3   median overlap 0.994   3/3 above 0.8
+#     env                    n=10  median overlap 0.981   6/10 above 0.8
+#     attribute_modification n=9   median overlap 0.172   1/9  above 0.8
+#     swap / addition / removal    median overlap 0.00-0.02
+# ⚠️ This CORRECTS the plan, which excluded `attribute_modification` and not `env`. Both were
+# wrong. `attribute_modification` is "turn the color of book to gray" -- a disjoint object, no
+# collision -- and it is the highest-yield family, so excluding it cost the most data for no
+# validity gain. `env` had slipped through because ingestion maps it to `background`.
+# Cost here is only 212 of 1,234 (17.2%); `style` is absent from the train split entirely.
+exclude_tasks: [style, env]
+
+# ⚠️ NOT `exclude_edit_types: [color, low-level]` as in v3. That rule was a proxy for the same
+# hazard, applied to our DERIVED taxonomy because the incumbent corpora publish no task label.
+# OmniEdit does publish one, so the collision is screened at the source instead of guessed at.
+exclude_edit_types: []
+
+# ★★ THE SAME COLLISION, ONE LEVEL DOWN, AND IT IS THE BIGGER HALF — found 2026-07-31 by
+# putting a CONTACT SHEET of the in-band scenes in front of an eye, which is the only reason
+# it was found at all. OmniEdit's `task` column labels 293 of the 1,022 in-band scenes
+# `attribute_modification`; the finer sub-task in `omni_edit_id` shows they are
+# `attr_mod_facial`: "make him be angry", "let him be excited", "make the dryad feel amused".
+# The instruction acts on the FACE, exactly where the skin-lightness manipulation acts.
+# That is 28.7% of the pool, and policy B could not see any of it.
+#
+# ⚠️ This is NOT the plan's "exclude attribute_modification" rule. That would also take
+# `attr_mod_color` (281 scenes, "turn the color of scroll to black") -- a disjoint object with
+# a measured skin overlap of 0.172 and no collision at all. Excluding the family wholesale
+# costs 281 clean scenes for no validity gain. Excluding only its facial half is the measured
+# answer, and neither the plan nor policy B had it.
+exclude_id_substrings: ["_attr_mod_facial_"]
+
+# ★ k IS DELIBERATELY UNSET FOR NOW — SCREEN FIRST, SAMPLE SECOND.
+#
+# The target is k=611, matching claim A's breadth block so a D-class null is comparable to the
+# A-class effects rather than to a different amount of evidence. But a CONTACT SHEET of a
+# seeded random sample of this pool (72 scenes, 2026-07-31) found 42% fail construct validity
+# for reasons no measurement in this file can see: multi-subject frames and side-by-side
+# collages, non-photographic subjects (CGI, anime, 3D renders, statues, an ogre), theatrical
+# face paint, and -- an ethics hard stop -- MINORS whose instructions never mention a child.
+# Taking a prefix before that screen would sample from a contaminated list, so the order is
+# screen -> collapse -> prefix, and k is set only once the surviving count is known.
+#
+# ⚠️ Two free screens were built for those failures and BOTH were rejected on their own
+# controls, which is why this is not simply fixed here:
+#   * "exactly one detected face" agreed with hand labels on only 6 of 8 controls, and both
+#     misses were two-subject scenes reported as one -- Haar's failure is RECALL, so merging
+#     cannot fix it and the error direction is the harmful one.
+#   * "the skin region has chroma" works (B&W control 7.5 vs colour 22-33) but is nearly
+#     vacuous here: 2 of 723, because the skin mask is itself a chroma rule, so a greyscale
+#     photo barely produces one and `min_skin_frac` has already removed it.
+#
+# Seeded-shuffle-then-take-prefix (red line R-A) means raising k later yields a STRICT
+# SUPERSET, so already-injected images and already-paid judge calls stay valid. Never lower k,
+# never change the seed. ⚠️ The superset property holds for a FIXED candidate set: adding an
+# OmniEdit shard re-runs the permutation over a longer list and breaks it. Decide the shard
+# set BEFORE taking the prefix, not after.
+k: null
+seed: 42
+
+cache_dir: data/images/fairness_masks
+
+# MEASURED RESULT OF THIS CONFIG — see `results/v2_fairness/metrics/pool_ds_v4.json`.
+#   MDE at n=611 is 0.113 SD, identical to claim A's breadth block.
+#   ⚠️ A null must still be written "no gap detected above 0.113 SD", never "the judges are fair".

@@ -1,0 +1,102 @@
+# MagicBrush (dev split) ingestion — full-version source D, the HUMAN-annotated anchor.
+#
+# MagicBrush (NeurIPS 2023 D&B, arXiv:2306.10012, HF osunlp/MagicBrush, CC-BY-4.0) is
+# the only source in the blend whose `target_img` is a *human* Photoshop edit rather
+# than a model output. That makes it the gold-standard reference: a judge that
+# deflates its score under a cosmetic bias is demonstrably reacting to the bias and
+# not to a model artifact.
+#
+# * `dev` and not `test`: the authors withhold the test split, so `dev` (528 turns
+#   over 266 distinct img_id, 4 parquet shards ~380 MB each) is the largest public
+#   evaluation slice.
+# * ONE edited image per sample (the human ground truth) => this source feeds the
+#   SCORING experiment; it cannot produce PairRecords (build_pairs needs >=2
+#   edit_models over the same original+instruction).
+# * MagicBrush ships per-turn MASKS. They are written to disk and recorded as
+#   metadata.has_mask / metadata.mask_path, which lets bias/edit_region.py inject
+#   C-class region biases against the true edit region instead of an image-diff
+#   estimate.
+#
+# ** DE-DUPLICATION (load-bearing) ** ImagenHub's Text-Guided Image Editing split is
+# DERIVED FROM MagicBrush dev — all 179 of its rated items are turns of this very
+# split (verified 179/179 key overlap). If both manifests kept them, the paper's
+# "the effect generalizes across independent sources" claim would be double-counting
+# a single source. `exclusion` below removes those 179 turns, leaving 349 disjoint
+# turns for this manifest. See tests/test_build_from_hf.py for the invariant test.
+
+source_dataset: MagicBrush
+id_prefix: mb
+
+# The edit is a human annotator's Photoshop work, not a model's — name it honestly.
+# Downstream metrics group by edit_model, so this label must not pretend otherwise.
+edit_model: human_annotator
+
+hf:
+  repo_id: osunlp/MagicBrush
+  revision: 1d8d4629150d18ca50afab66391866f2085be989   # dataset commit the benchmark was built from
+  shard_prefix: data/dev     # skips the 51 train shards (~19 GB) entirely
+  n_shards: 4                # all 4 dev shards = 528 rows
+  # The four dev shards at `revision`, listed explicitly so no repo listing (network) is
+  # needed; identical to what shard_prefix + n_shards selects.
+  shards:
+    - data/dev-00000-of-00004-f147d414270a90e1.parquet
+    - data/dev-00001-of-00004-8ef3de1dc8cb8a6a.parquet
+    - data/dev-00002-of-00004-54c4d7b0a9e49db5.parquet
+    - data/dev-00003-of-00004-384b81a61c93b7e3.parquet
+  cache_dir: tmp_data/hf_cache
+  plan_over_http: true       # --dry-run reads only metadata columns over HTTP
+
+# Verified parquet schema:
+#   img_id string | turn_index int32 | source_img struct<bytes,path>
+#   mask_img struct<bytes,path> | instruction string | target_img struct<bytes,path>
+# No single unique id column: a row is identified by (img_id, turn_index), because
+# each img_id carries up to 3 sequential turns (turn N's source == turn N-1's target).
+columns:
+  sample_key: [img_id, turn_index]
+  instruction: instruction
+  original_image: source_img
+  edited_image: target_img
+  mask_image: mask_img
+key_sep: "_"                 # => keys like "100081_1", matching the ImagenHub uids
+
+# MagicBrush ships no edit-type / content-category label, so both group keys are
+# derived from the instruction text by the shared deterministic rules module.
+edit_type_from: rules
+content_category_from: rules
+
+# Crowd-written MagicBrush instructions are terse and heavily phrased as
+# "let the X be Y" / "have there be a Z", which the shared rules do not cover
+# (~56% coverage). Rather than drop 44% of the split we fall back to `replace` —
+# the dominant semantics of that phrasing — and every fallback row is COUNTED and
+# tagged `metadata.edit_type_source: default`, so the §9.4 breakdown can restrict
+# itself to rule-derived labels. Do NOT read the `replace` bucket of this source as
+# a clean edit-type stratum.
+default_edit_type: replace
+default_content_category: global
+
+exclusion:
+  # 180 lines: header `uid`, then 179 uids `sample_<img_id>_<turn_index>.jpg`.
+  path: tmp_data/imagenhub_meta/dataset_lookup.csv
+  format: imagenhub_uid
+  column: uid
+  reason: >
+    ImagenHub Text-Guided IE is derived from MagicBrush dev; excluding its 179
+    turns keeps the two full-version sources genuinely independent.
+
+sampling:
+  seed: 42
+  # 349 turns survive exclusion, distributed add 90 / replace 214 / remove 29 /
+  # background 8 / color 7 / low-level 1. A cap of 200 trims only the
+  # fallback-inflated `replace` bucket => 335 samples, inside the 300-349 target.
+  # Growing this cap yields a strict SUPERSET of the current selection (same seed,
+  # per-type shuffle order independent of the cap), so already-injected biased
+  # images and already-paid judge calls stay valid.
+  per_edit_type: 200
+
+images:
+  original_dir: data/images/original/magicbrush
+  edited_dir: data/images/edited/magicbrush
+  mask_dir: data/images/mask/magicbrush
+
+output:
+  samples: data/manifests/samples_magicbrush.jsonl

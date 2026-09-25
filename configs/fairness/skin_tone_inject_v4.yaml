@@ -1,0 +1,61 @@
+# D-S INJECTION v4 — deterministic apparent-skin-lightness manipulation on the OmniEdit pool.
+# ZERO API CALLS.
+#
+# 611 content-distinct scenes x 4 arms x 2 members = 4,888 images, cost $0, ~10 GB of PNG.
+#
+# ★ READ `skin_tone_inject.yaml` FIRST — the arms, the symmetric +-delta design and the reason
+# `scene_preserved` is a measurement rather than an MLLM judgment are all documented there and
+# are UNCHANGED here. Only the pool and the output paths differ.
+#
+# ★ WHY THE OUTPUT PATHS ARE ALL NEW
+# v3's 226 injections are on disk under `data/images/fairness_ds` and
+# `data/manifests/attribute_injections.jsonl`. `injection_id` is
+# `{base_sample_id}__{attribute}__{label}__{applied_to}`, and the two pools share no sample
+# ids, so a collision is not the risk -- MIXING is. A single manifest holding both pools would
+# let the construction gate, the staging sheets and every later metric silently pool 31 scenes
+# selected by one screen with 611 selected by another. This is the same discipline as
+# `results/v2` versus `results/`, and it is cheap to keep.
+#
+# ⚠️ RUN THE PREFIX FIRST. `--limit 20` takes the first 20 scenes of the pool file, and
+# resume-by-`injection_id` makes the full run pick up exactly where the pilot stopped -- nothing
+# recomputed, nothing wasted. Those 20 stay pool MEMBERS when the construct screen is topped up
+# (see the k protocol below); they do not stay the first 20, which is irrelevant to a human
+# look and would only matter if money had been spent on them.
+# Gate P4 (a human look at ~20 staged sheets) is what the pilot exists for: v3's
+# injector passed its arithmetic gate 31/31 and the images were still wrong, so the arithmetic
+# gate passing is NOT evidence that the manipulation is what it claims to be.
+
+# ★★ THE SCREENED MANIFEST, NEVER THE CANDIDATE ONE — and the two must stay separate files.
+# `samples_fairness_ds_v4.jsonl` is pass 1's CANDIDATE pool (1,325 scenes, unscreened) and it is
+# also what `construct_screen.yaml` reads. Pass 2 originally wrote its screened output back over
+# that same path, which is a silent self-destruct: the moment pass 2 ran, the construct screen's
+# input became the already-passed subset and the screen increment would have found nothing left
+# to measure while reporting a clean "0 new candidates". Pass 2 now writes here instead
+# (`--out`), the candidate manifest stays intact, and the screen can be topped up any number of
+# times.
+#
+# ⚠️ K PROTOCOL, because `include_ids` filters BEFORE the seeded shuffle. Growing the pass list
+# re-runs the permutation over a longer list, so a k-prefix taken on a PARTIAL screen is not a
+# subset of the k-prefix taken on the full one. Two consequences, both load-bearing:
+#   * while the screen is incomplete, run pass 2 with **k unset** -- every passing scene is kept,
+#     so growing the screen only ADDS and nothing already injected or judged is invalidated;
+#   * apply a k exactly ONCE, after the screen is complete, and never lower it afterwards.
+# The free injection pilot is safe either way (its 20 scenes remain pool MEMBERS under growth,
+# they simply stop being the first 20) -- but a PAID probe on a k-prefix of a partial screen
+# would be money spent on scenes that may fall outside the final sample.
+pool: data/manifests/samples_fairness_ds_v4_screened.jsonl
+attribute: skin_tone
+
+delta_ita: 30.0
+include_sham: true
+include_sham_nonskin: true
+
+output_dir: data/images/fairness_ds_v4
+manifest_out: data/manifests/attribute_injections_v4.jsonl
+failure_log: results/logs/attribute_inject_v4_fail.jsonl
+
+# The same region config the pool was screened with, so the masks are cache hits and the gate
+# later re-reads exactly the bytes the injection was built from.
+cache_dir: data/images/fairness_masks
+
+seed: 42

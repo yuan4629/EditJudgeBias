@@ -1,0 +1,9 @@
+# Detail-caption bias — full-version C3.
+# Template text only (no LLM) so the strip is deterministic. No original needed.
+bias_type: detail_caption
+config:
+  template: "Edited: {instruction}"
+  max_words: 14
+  font_ratio: 0.035
+  bg_color: [255, 255, 255]
+  fg_color: [20, 20, 20]

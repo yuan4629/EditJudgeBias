@@ -1,0 +1,58 @@
+# WP-A4d -- the load-bearing control for WP-A4c.
+#
+# WHAT A4c LEFT UNRESOLVED.  A4c swapped ONE sentence in the validator template (naming
+# the four C-class overlays as cosmetic, exactly as the published template already named
+# four B-class ones) and `zoom_inset`'s McNemar-vs-floor went from p=0.0039 to p=0.50,
+# pass rate 0.9182 -> 0.9818.  Two stories predict that identically:
+#   (a) the published template is unfair to C-class BY CONSTRUCTION  -- the A4c reading;
+#   (b) the ablated sentence simply BLINDED the validator, so it now waves through real
+#       occlusion as well as decorative overlay.
+# Nothing collected so far separates them, and §18.3's three paper edits are written
+# conditionally ("holds under the template") until this arm answers.
+#
+# THE DESIGN.  Run the ABLATED template over the 110 images from WP-A4b whose edit region
+# was replaced with the ORIGINAL pixels (`edit_damage_100`, severity 1.0).  On those the
+# instruction is demonstrably not carried out, and the published template caught it at
+# sensitivity 0.946 (88/93).  So:
+#   * ablated sensitivity still ~0.95  => the ablation is SPECIFIC: it stopped penalising
+#     overlays and did not stop seeing destruction.  A4c's reading stands, and §18.3's
+#     three edits become unconditional.
+#   * ablated sensitivity collapses    => the ablation is GENERAL blinding.  A4c's reading
+#     inverts, and §5.7.4 must say so.
+# Both outcomes are publishable; that is why the branch is pre-registered here, in the
+# config, before the calls are made -- same discipline as §17.7, which then fired.
+#
+# WHY THIS IS THE 110 AND NOT THE 440.  The other three `edit_damage` conditions (0.25,
+# 0.5, blur) buy a threshold curve we already have under the published template.  The
+# question here is binary, so it takes the condition with the least ambiguous ground
+# truth.  `bias_types` (added for this arm) filters to that one bucket and RAISES on a
+# typo, because `validated=0` and "already finished" look identical in the runner's
+# output.  ⚠️ It is refused alongside `per_bias > 0`: `_select` draws all buckets from one
+# shared RNG, so dropping a bucket would re-draw the survivors -- the WP-A3 root cause.
+#
+# ⚠️ WRITES TO `results/v2_ablation_control/`, NEVER `results/v2/`, `results/v2_control/`
+# or `results/v2_ablation/`.  These rows carry the SAME `biased_id`s as A4b's verdicts and
+# differ from them ONLY in `prompt_style` -- a column no result file has.  Appending them
+# to A4b's manifest would make resume-by-`biased_id` skip them AND would silently mix two
+# prompts in one sensitivity number.
+#
+# ⚠️ SENSITIVITY IS REPORTED ON n≈93, NOT 110, and against A4b's own 93 -- the same
+# exclusion (17 images whose edit is too small for reverting it to change the frame by
+# 1/255).  Comparing an ablated 110-denominator against a published 93-denominator would
+# manufacture a difference out of bookkeeping.  Both denominators get reported, as in A4b.
+#
+# QUOTE: 110 calls x $0.0200 (measured) = ~$2.20.
+# Approved by the user 2026-08-17.
+samples: data/manifests/samples_editdamage_v2.jsonl
+biased: data/manifests/biased_samples_editdamage_v2.jsonl
+bias_types:
+  - edit_damage_100
+per_bias: 0
+seed: 42
+prompt_style: c_class_named
+judge_config: configs/judge/gemini_flash_lite.yaml
+raw_dir: results/v2_ablation_control/raw_responses_validation
+out_manifest: results/v2_ablation_control/quality/validation__gemini-3.5-flash.jsonl
+summary_csv: results/v2_ablation_control/metrics/quality_preservation_summary__a4d.csv
+failure_log: results/logs/quality_a4d_ablation_control_failures.jsonl
+workers: 4

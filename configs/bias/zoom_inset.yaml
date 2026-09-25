@@ -1,0 +1,9 @@
+# Zoom-inset "detail call-out" bias — full-version C2.
+bias_type: zoom_inset
+config:
+  zoom: 2.0              # magnification of the cropped edit region
+  max_frac: 0.4          # inset side capped to 40% of the frame so it fits a corner
+  border_ratio: 0.005859375   # 3px at the 512px reference; scales with the frame
+  border_color: [255, 255, 255]
+  margin_frac: 0.02
+  region_threshold: 15

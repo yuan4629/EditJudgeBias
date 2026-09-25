@@ -1,0 +1,82 @@
+# D-S POOL — the deterministic skin-lightness arm. Detector-first, zero API cost.
+#
+# ★ WHY THIS REPLACES THE `content_category == "human"` SCREEN
+# The published 41-scene pool was selected by a manifest label, and the label is wrong often
+# enough to have decided the study: only **14 of those 41** scenes contain any detectable
+# face, and the pool demonstrably holds gulls, a squirrel, a zebra, dolls, a burger and a TV
+# remote. The label also loses real candidates -- of the 139 originals whose face covers >2%
+# of the frame, only 87 carry the `human` tag; the other 52 are global / object / scenery.
+# Personhood is therefore MEASURED here (DeepLabV3 person mask + skin chroma), never read off
+# a field. `content_category` survives only as a reported column.
+#
+# The instruction screens are unchanged and BOTH still apply:
+#   `_ATTR_WORDS`  - never flip an attribute the instruction itself refers to.
+#   `_MINOR_WORDS` - ETHICS HARD STOP, never relaxed to grow the pool.
+#                    `tests/test_pool_detector.py` pins that it still bites with the
+#                    `content_category` screen switched off.
+#
+# ★ THIS POOL GATES ON SKIN, NOT ON A FACE — and getting that wrong cost a whole pool once.
+# A first detector pass required a Haar face box and returned 16 scenes. That was a design
+# error, not a pool ceiling: this arm recolours SKIN and needs no face. Measured, 38 originals
+# carry a clearly segmented person (person_frac up to 0.997, skin_frac up to 0.698) for which
+# Haar finds ZERO faces even with a profile cascade added -- backs turned, occluded, or simply
+# 512px-blurry. Those are ideal skin-recolor subjects and terrible head-composite ones.
+# The generative arm, which does need a face, has its own config: `pool_dg.yaml`.
+#
+# Measured funnels at person_frac >= 0.05, before the edit-type exclusion and ORB collapse:
+#     skin >= 0.02 -> 95   >= 0.04 -> 75   >= 0.06 -> 51   >= 0.10 -> 27
+#     face >= 0.01 -> 24   >= 0.02 -> 19   >= 0.04 -> 14      <- the D-G ceiling
+#
+# ⚠️ MEASURED CORRECTION TO THE PLAN. `samples_ebench18k.jsonl` is ENTIRELY CONTAINED in
+# `samples_full_v2.jsonl`: all 10,030 of its ids are already there and make up 10,030 of
+# full_v2's 13,869 rows, so the union is exactly 13,869. Pointing at the EBench manifest does
+# NOT widen the pool. Real widening would mean ingesting EBench's currently-excluded task
+# families (texture / action / expression / weather / counting / position / size, all
+# `edit_type: null` under a binding project commitment), and of those only ~14 originals are
+# both person-bearing and instruction-clean -- action/expression instructions reference the
+# person and are screened out anyway. Both paths are still listed because it costs nothing and
+# documents the check.
+samples_paths:
+  - data/manifests/samples_ebench18k.jsonl
+  - data/manifests/samples_full_v2.jsonl
+
+out_path: data/manifests/samples_fairness_ds_v3.jsonl
+screens_out: results/v2_fairness/metrics/pool_screens_ds_v3.jsonl
+
+detector: true
+require_human_category: false      # the detector decides; the label is only reported
+require_face: false                # skin, not face -- see above
+min_skin_frac: 0.04
+min_person_frac: 0.05
+
+# ⚠️ OFF for this arm. Geometric alignment exists so the GENERATIVE arm can composite one
+# rendered patch into both members of a pair. The deterministic arm recolours each member
+# through its own skin mask, so it has no alignment requirement, and leaving the screen on
+# would discard usable scenes for a constraint that does not apply.
+check_alignment: false
+
+# ORB content dedupe, unchanged from the published build (41 scenes anywhere in [30, 96]
+# inliers). The instrument self-validates before any verdict is believed.
+threshold: 60
+
+# ★ OPERATOR COLLISION EXCLUSION.
+# "Change the red top to white top", "Increase the resolution of the image", "Transform the
+# image into a crayon drawing" are the SAME KIND OF OPERATOR as a photometric recolor. The
+# study already documents this hazard for `low-level x {brightness, saturation,
+# aesthetic_filter}`, where the judge SHOULD move and a shift is therefore not evidence of
+# bias. These two families dominate the top of the skin-fraction ranking, so excluding them
+# costs real n (measured: 1,156 candidates -> 673) and buys a clean causal reading. That is
+# the right trade for this arm; `pool_dg.yaml` does not need it, because flipping gender does
+# not collide with "change the umbrella to green".
+exclude_edit_types: [color, low-level]
+
+# Person masks are cached as PNGs keyed by a digest of the region config, so this pass is paid
+# once and the construction gate later re-reads exactly the bytes the injection was built from.
+cache_dir: data/images/fairness_masks
+
+# MEASURED RESULT OF THIS CONFIG (2026-07-30):
+#   candidates measured 673 -> passed detector 43 -> content-distinct scenes 31
+#   dropped: person_frac 583, skin_frac 47
+#   MDE 0.50 SD  -> clears the G1 hard stop (<12 = do not spend) and lands in the
+#                   "run, but report the MDE honestly" band (12-39).
+#   ⚠️ A null here must read "no gap detected above ~0.50 SD", NEVER "the judges are fair".

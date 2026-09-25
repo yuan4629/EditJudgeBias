@@ -1,0 +1,24 @@
+# AUDITOR B for the D-class preservation gate.
+#
+# Why a second auditor: the gate DECIDES n, and auditor A (gpt-4o-mini) has a demonstrable
+# false-negative. One of its own reasons reads "the two images depict the same person with only
+# a change in gender" while it answered attribute_flipped=false, and it disagrees WITH ITSELF
+# on whether a person is legible in 10 of the same 41 images depending on which attribute it
+# was asked about. The false-flip floor (0/20 on identical pairs) bounds false POSITIVES only;
+# it says nothing about missed flips, and a missed flip silently discards usable data.
+#
+# gpt-5.5 rather than gemini-3.5-flash: gemini returned unparseable output on 34 of 40 calls in
+# the 2026-07-30 probe with this prompt.
+#
+# Combination rule follows the §6.1 precedent: the admitted set is the INTERSECTION. A pair is
+# used only if both auditors confirm the flip took and the scene survived. That is conservative
+# in the direction that protects the causal claim -- an admitted-but-bad pair corrupts the gap,
+# a dropped-but-good pair only costs power, and the power cost is reported.
+attribute_edits: data/manifests/attribute_edits.jsonl
+judge_config: configs/judge/gpt5_5.yaml
+control: true
+out_manifest: results/v2_fairness/quality/attribute_validation__gpt-5.5.jsonl
+raw_dir: results/v2_fairness/raw_responses_validation
+summary_csv: results/v2_fairness/metrics/attribute_validation_summary__gpt-5.5.csv
+failure_log: results/logs/attribute_validation_b_fail.jsonl
+workers: 6

@@ -1,0 +1,74 @@
+# D-S CONSTRUCTION GATE v4 — the OmniEdit pool. Identical thresholds to
+# `construction_gate.yaml`; only the input and output paths differ, so the two pools can
+# never be gated into one number. Read that file for why every threshold is where it is.
+#
+# ⚠️ PASSING THIS GATE IS NECESSARY, NOT SUFFICIENT. v3 passed it 31/31 with byte-exact
+# locality and a human look then found 30 of those 31 scenes were crowds, hands on a guitar
+# body, or otherwise not a single-subject skin-tone counterfactual. Gate P4 (staged sheets,
+# human verdict) is the one that decides whether this arm reports a fairness result.
+#
+# D-S CONSTRUCTION GATE — deterministic, free, and it REPLACES an MLLM judgment.
+#
+# The 2026-07-30 gate asked two MLLM auditors whether the scene survived. They reached Cohen's
+# kappa **+0.130** on that sub-question (while agreeing at +0.716 on the easy "is a person
+# present"), pair-validity agreement came out at **-0.028** = chance, the intersection admitted
+# 5 of 41 pairs, and the track stopped. The fix is not a third auditor -- it is that
+# `scene_preserved` was a MEASUREMENT all along.
+
+injections: data/manifests/attribute_injections_v4.jsonl
+out_json: results/v2_fairness/metrics/construction_gate_v4.json
+
+# ★ NO TOLERANCE. Every injection composites through a mask, so outside that mask the output is
+# the input's bytes verbatim -- by construction, not by approximation. A single nonzero pixel
+# means a lossy resave, a resize, or an alpha leak, i.e. a bug. Verified on all 226 real
+# injections: max_outside_diff = 0 everywhere.
+max_outside_diff: 0
+
+# `verify_pixels` re-reads the SAVED PNG and re-asserts locality against the source image,
+# rather than trusting the number the injector recorded in memory before writing the file.
+# That in-memory value cannot catch a lossy or mis-sized save, which is precisely the class of
+# failure a zero-tolerance check exists to catch.
+verify_pixels: true
+
+# Mask-size bounds. A mask covering ~nothing is not a manipulation; one covering most of the
+# frame stops being local, and this study has already measured that GLOBAL tonal cues
+# (`saturation`, `aesthetic_filter`) are null on 4/5 judges while LOCAL readable ones deflate
+# on 5/5. Staying local is what keeps the arm interpretable at all.
+mask_frac_min: 0.005
+mask_frac_max: 0.60
+
+# A study arm that changed nothing would be a silent no-op passing every other check.
+min_inside_diff: 6
+
+# ★ THE ITA DOSE FLOOR IS EVALUATED ON THE `original` MEMBER ONLY.
+# Measured: 0 of 62 original rows fall below 25 deg (median 30.26), but 16 of 62 EDITED rows do
+# -- and that is correct, not a defect. The mask is derived from the original, so on the edited
+# image it covers different pixels (one scene's instruction replaces the background outright),
+# and the same Lab offset applied to a different starting colour yields a different ITA change
+# because ITA is nonlinear: `ebench_H_09_02` reads +17.6 on the original and -38.8 under the
+# same mask on the edited image. Gating the edited member on ITA would discard 9 good scenes
+# for a nonlinearity. The PHYSICAL dose is what must match across members, and it does --
+# mean dE00 6.07 vs 5.89 on that very pair -- which is what `max_delta_e00_ratio` checks.
+min_delta_ita: 25.0
+max_delta_e00_ratio: 2.0
+
+# ★ Both arms of a scene must share ONE mask digest. That is what makes segmentation error
+# common-mode -- if the mask clips an ear it clips it identically in both arms, so it cannot
+# produce a difference between them. `mask_sha256` makes it auditable rather than asserted.
+require_same_mask: true
+
+# ★ NEW IN v4, and it exists because the corpus changed under the assumption.
+# One scene preparation derives the mask from the ORIGINAL and both members are manipulated
+# through it. Across the two ARMS that sharing is essential -- it makes segmentation error
+# common-mode, so a clipped ear is clipped identically in dark and light and cannot create a
+# difference between them. Across MEMBERS it is an ASSUMPTION, and OmniEdit's edited images
+# are whole-frame RE-RENDERS at a different resolution (411 of 692 pairs differ in size), not
+# inpaints. Where the person moved, the mask recolours skin on one side and background on the
+# other, and the judge is shown a pair whose members were manipulated in different places.
+#
+# Measured over 60 random pairs before setting this: median coverage **0.971**, IoU 0.923, and
+# resized pairs (0.941) barely worse than same-size ones (0.984) -- so the assumption holds for
+# this corpus and the arm is sound. But 1 in 60 fell below 0.5. The floor sits at the tail
+# (p05 = 0.690) so it refuses the broken transfers without trimming the healthy spread.
+# ⚠️ An UNMEASURED coverage fails too. A missing measurement is not a passing one.
+min_edited_mask_coverage: 0.5

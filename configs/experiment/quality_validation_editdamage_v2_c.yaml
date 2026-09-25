@@ -1,0 +1,36 @@
+# WP-A4b — validator SENSITIVITY positive control, validator glm-4v.
+#
+# WHAT THIS MEASURES, AND WHY IT IS NOT THE SAME QUESTION AS `sham`.
+# `sham` measures SPECIFICITY: with nothing wrong, how often does the validator cry
+# wolf?  This arm measures SENSITIVITY: with the edit PROVABLY destroyed, how often does
+# it stay silent?  A validator can score perfectly on the first and be worthless, by the
+# simple expedient of never flagging anything.  WP-A3 made that a live worry rather than
+# a hypothetical: gemini's false-flag floor came out at 3/780 = 0.38%, and $5.7's new
+# headline (`zoom_inset` significantly below floor) rests on that validator being an
+# instrument rather than a rubber stamp.  `severity=1.0` settles it: the edit region is
+# replaced with the ORIGINAL pixels, so the instruction is demonstrably not carried out.
+#
+# GROUND TRUTH NEEDS NO RATER.  That is the point of building the control this way.
+#
+# ⚠️ WRITES TO `results/v2_control/`, NEVER `results/v2/`.
+# `build_quality_combined` globs `validation__*.jsonl` under the results dir it is given;
+# one row of this control landing there would be read as an eleventh cue — a cue that
+# genuinely destroys quality, inside a table whose premise is that no cue does.
+# `tests/test_edit_damage.py` asserts no config both names `edit_damage` and writes into
+# the published tree.
+#
+# ⚠️ SENSITIVITY IS REPORTED ON n≈93, NOT 110.  17 of the 110 base images have an edit so
+# small that reverting it changes the picture by < 1/255 (edit regions of 0.01%-2% of the
+# frame).  On those, the damaged and the edited version are indistinguishable, so a
+# validator saying "preserved" is RIGHT, not blind.  Scoring them as misses would
+# manufacture exactly the insensitivity this arm exists to measure.  See A4a note 4.
+samples: data/manifests/samples_editdamage_v2.jsonl
+biased: data/manifests/biased_samples_editdamage_v2_100.jsonl
+per_bias: 0
+seed: 42
+judge_config: configs/judge/glm4v.yaml
+raw_dir: results/v2_control/raw_responses_validation
+out_manifest: results/v2_control/quality/validation__glm-4v.jsonl
+summary_csv: results/v2_control/metrics/quality_preservation_summary__glm-4v.csv
+failure_log: results/logs/quality_editdamage_glm4v_failures.jsonl
+workers: 8

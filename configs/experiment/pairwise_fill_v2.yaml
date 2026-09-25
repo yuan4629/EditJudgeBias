@@ -1,0 +1,57 @@
+# FILL (2026-09-14) — the ten pairwise conditions ARM ④ (`pairwise_v2.yaml`) never ran,
+# so `pairwise_one_sided` can cover the whole cue roster instead of three cues.
+#
+# 616 pairs x 10 conditions = 6,160 new calls per judge:
+#   8 one-sided image conditions: saturation / watermark / aesthetic_filter /
+#     region_annotation / zoom_inset / detail_caption / distraction / sham
+#   2 prompt-level conditions: bandwagon, model_name (both slots keep their images)
+#
+# Collected ONLY through the fill orchestrator (see configs/experiment/fill_v2.yaml):
+#   PYTHONPATH=src python -m edit_judge_bias.experiments.fill_runner plan
+#
+# Everything that decides WHAT IS ASKED matches pairwise_v2.yaml: pairs, seed,
+# prompt_style, and the seeded dressed side (`side` unset). The orchestrator builds
+# targets, prompts and rows through run_pairwise_judge's own functions, so a fill row
+# and a published row for the same condition are the same question.
+#
+# `include_position_swap: false` -- `position` is complete (616/616 on all six judges).
+# The unbiased baseline target cannot be switched off in the runner; it is on disk for
+# every judge, so the done-set skips it without a call.
+#
+# `bandwagon_target: seeded` is the pairwise form of A2 (`prompt_bias.bandwagon_side`):
+# the endorsed slot is a seeded function of the pair id, for the same reason the
+# dressed side is -- always endorsing A would confound A2 with A1.
+# `model_name_source: true_name` names each slot's real editor, as the breadth arm does
+# for scoring; no pair has the same editor on both sides (measured 0/616).
+# NOTE: neither prompt cue sets `biased_side`, so `compute_one_sided_bias` (which keys on
+# biased_side in {a,b}) will not tabulate them as it stands: bandwagon's endorsed slot is
+# in bias_params.bandwagon_target, and model_name has no dressed side at all. Their table
+# needs its own reading; the data does not.
+#
+# WHY results/v2_fill AND NOT results/v2. Every published table globs results/v2, and
+# the coverage guard counts raw_judgments rows only. Every row this arm writes is a
+# BIASED row, so the guard would never hold a half-collected cue back: it would walk into
+# pairwise_one_sided.csv at the next `scripts/06_build_tables.sh` and move published BH q-values -- the
+# A5 "fourth door", again. The fill tree joins results/v2 only by an explicit merge
+# after collection has ended.
+
+pairs: data/manifests/pairs_judge_v2.jsonl
+include_position_swap: false
+one_sided_biases:
+  biased: data/manifests/biased_pair_members_fill_v2.jsonl
+  bias_types: [saturation, watermark, aesthetic_filter, region_annotation,
+               zoom_inset, detail_caption, distraction, sham]
+  # side: seeded per pair (omit to get that), as in pairwise_v2.yaml
+
+prompt_biases:
+  - bias_type: bandwagon
+    bandwagon_target: seeded
+  - bias_type: model_name
+    model_name_source: true_name
+
+prompt_style: vanilla
+judge_config: configs/judge/mock.yaml   # the orchestrator sets the judge per lane
+raw_dir: results/v2_fill/raw_responses
+results_dir: results/v2_fill
+failure_log: results/logs/fill_v2_failures.jsonl
+seed: 42

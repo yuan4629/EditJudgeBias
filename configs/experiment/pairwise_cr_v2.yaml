@@ -1,0 +1,49 @@
+# ARM ⑥: pairwise Consistency Rate — the noise floor arm ④ is missing.
+#
+# §8.2 defines CR (ask the unbiased pair again, unchanged) and §13's go/no-go
+# explicitly requires it, but the main grid only collected it for scoring. Without
+# it the position result has no null: qwen3.5-plus's RR of 0.352 could be a sticky
+# slot or it could be a judge that simply does not answer the same question the same
+# way twice, and §8.2's own reading table needs both numbers to tell them apart —
+#
+#   high CR + low  RR : stable, but manipulable by slot        <- a real finding
+#   low  CR + low  RR : the model is noisy; read the bias claim with care
+#   high CR + high RR : robust
+#
+# The displayed-letter joint distribution already argues for stickiness (qwen repeats
+# the same slot 62% of the time), but that is an inference from one run; CR measures
+# it directly.
+#
+# 616 pairs x 1 extra call = 616 NEW calls/judge. The first-pass baselines are
+# already on disk from arm ④, so the resume logic skips them and only the repeats are
+# paid for. ONLY the baseline condition is asked: `include_position_swap` is off and
+# there are no `one_sided_biases`, so this arm does not re-ask the 4 biased conditions.
+#
+#   python -m edit_judge_bias.experiments.run_pairwise_judge \
+#     --config configs/experiment/pairwise_cr_v2.yaml \
+#     --judge-config configs/judge/gpt5_5.yaml --use-api
+#
+# Run it AFTER arm ④, or it pays for both passes.
+#
+# THE CACHE MUST BE OFF, for the reason the scoring retest arm states: an identical
+# second ask served from disk would report CR = 1.0 by plumbing rather than by
+# evidence. The runner refuses to start if `repeat > 1` and a cache_dir survives.
+#
+# Reading these rows: they carry `bias_params.repeat_index = 2`, no bias_type, and the
+# same pair_id as the baseline they repeat, and they land in the SAME manifest. Every
+# metric that joins on (judge, pair_id) must skip them — `pairwise_metrics`
+# `_winner_by_pair` does, and there is a regression test pinning it.
+
+pairs: data/manifests/pairs_judge_v2.jsonl
+include_position_swap: false   # baseline only; the swap is arm ④'s job
+repeat: 2
+
+prompt_style: vanilla
+judge_config: configs/judge/mock.yaml   # override per run with --judge-config
+judge_overrides:
+  cache_dir: null              # load-bearing — see above
+raw_dir: results/v2/raw_responses
+results_dir: results/v2
+failure_log: results/logs/pairwise_cr_v2_failures.jsonl
+seed: 42
+workers: 8

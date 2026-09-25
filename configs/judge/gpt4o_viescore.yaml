@@ -1,0 +1,19 @@
+# Judge: gpt-4o with a VIEScore-style scoring rubric (published panel).
+# `model_name` is the label used in results and tables; `api_model` is the model id sent to
+# the endpoint, so this judge stays distinct from any plain gpt-4o run.
+#
+# `scoring_prompt_style` lives in the judge config (not the arm config) because the v2 arms
+# pin `prompt_style: vanilla` and are run for every judge via `--judge-config`. It affects
+# scoring only; the pairwise prompt has no VIEScore variant.
+type: openai
+model_name: gpt-4o-viescore
+api_model: gpt-4o
+scoring_prompt_style: viescore
+api_key_env: EDITJUDGE_API_KEY
+temperature: 0
+max_tokens: 1024
+timeout: 60
+max_retries: 4
+image_detail: low
+cache_dir: results/cache
+# No `extra_params`: gpt-4o rejects `reasoning_effort` (HTTP 400).

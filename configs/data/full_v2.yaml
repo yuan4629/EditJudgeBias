@@ -1,0 +1,121 @@
+# Full-version manifest: combine the five per-source builds into one pool, then
+# draw the subset the judges actually run on.
+#
+# ============================ FROZEN 2026-07-25 ==============================
+# The pool is final: there is no further source to admit. Three things must now
+# stay fixed, because changing any of them RESHUFFLES strata and can drop a sample
+# that has already been injected or judged:
+#   1. the `edit_type` rules (`data/edit_type_rules.py`) — a record changing class
+#      leaves one stratum and joins another, reshuffling both;
+#   2. the per-source builder sampling configs (`groups_per_edit_type`,
+#      `per_edit_type`, `max_total`) — those builders share one RNG across buckets
+#      (so changing one bucket reshuffles the others);
+#   3. `judge_subset.seed` and `require_edit_type_trusted`.
+# Everything else is safe: ADDING a source and RAISING a k only ever add work.
+# Verified empirically — admitting EBench-18K (+10,030 samples) dropped 0 of the
+# existing 411 subset ids, 0 of the 3,839 pool ids and 0 of the 384 pair ids.
+# =============================================================================
+#
+# PROVENANCE. Five *builders*, THREE independent content pools: I2EBench (600),
+# MagicBrush dev (266 images / 528 turns) and EBench-18K (590 originals).
+# Measured 2026-07-25:
+#   - ImagenHub's rated 179 turns are exactly a subset of MagicBrush dev's 528.
+#   - GenAI-Bench image_edition's 147 distinct prompts are 142 (96.6%) MagicBrush
+#     dev, and every voted prompt lies inside ImagenHub's rated 179.
+#   - MagicBrush dev here draws only from the 349 turns ImagenHub did NOT rate.
+#   - EBench-18K passes all three overlap dimensions against all four others ONLY
+#     because its deblur/desnow/lowlight tasks are excluded in ebench18k.yaml —
+#     they share GoPro/CSD/LOL with I2EBench (measured 11/12, 4/12 dirty).
+#     Report: data/provenance/overlap_ebench18k.json
+# So do not claim five-dataset generalisation. What the split buys: FOUR label
+# kinds over three content pools (3-dimension human MOS, absolute human SC/PQ,
+# real pairwise human votes, human ground-truth edited images) and four model
+# rosters. See tmp_data/imagenhub_meta/mb_dev_partition.json for the partition.
+
+sources:
+  - name: I2EBench
+    samples: data/manifests/samples_i2e600.jsonl
+    pairs: data/manifests/pairs_i2e600.jsonl
+  - name: ImagenHub
+    samples: data/manifests/samples_imagenhub.jsonl
+    pairs: data/manifests/pairs_imagenhub.jsonl
+  - name: GenAI-Bench
+    samples: data/manifests/samples_genaibench.jsonl
+    pairs: data/manifests/pairs_genaibench.jsonl
+  - name: MagicBrush
+    samples: data/manifests/samples_magicbrush.jsonl
+    # No pairs: this source has a single edit_model (human_annotator), so there
+    # is nothing to pit against anything. It serves as the quality ceiling and
+    # supplies the only masks in the pool.
+  - name: EBench-18K
+    samples: data/manifests/samples_ebench18k.jsonl
+    # Densest pair source in the pool: 17 editors on every original, and every
+    # sample carries a MOS, so 100% of these pairs have a human ground truth.
+    pairs: data/manifests/pairs_ebench18k.jsonl
+
+output:
+  samples: data/manifests/samples_full_v2.jsonl
+  pairs: data/manifests/pairs_full_v2.jsonl
+
+judge_subset:
+  # Same seed as configs/data/i2ebench.yaml so I2EBench draws stay aligned with
+  # the pilot. Growing per_source_per_edit_type yields a strict superset of the
+  # smaller draw, so biased images already injected and judge calls already paid
+  # for remain valid -- never lower it and never change the seed.
+  seed: 42
+  per_source_per_edit_type: 20
+  # Deepen one class without touching any other stratum. `low-level` was the
+  # pool's weakest cell (n=21, MDE +-0.94 against real effects of -0.18..-0.58)
+  # and it is also where the positive control lives: the instruction
+  # "Enhance the brightness" is the SAME operator as the brightness bias, so the
+  # judge *should* move in those cells. That arm needs the volume.
+  per_edit_type_overrides:
+    low-level: 60
+  # Exclude rows whose edit_type came from a configured default rather than a
+  # rule match, so the §9.4 strata stay clean.
+  require_edit_type_trusted: true
+
+  # Claim B (the bias pushes the judge AWAY from human judgement) needs several
+  # editors on the SAME item to derive a pairwise preference. The stratified draw
+  # above scatters its picks across turns — measured 0.21 derivable pairs per paid
+  # sample — so the anchors are drawn separately, by whole turns.
+  # Editors within a turn are drawn seeded, not alphabetically, so a block covers
+  # all of a source's editors rather than always its alphabetically-first ones.
+  #
+  # TWO blocks, because claim B on one source is a single-source finding. They sit
+  # on independent content pools and carry DIFFERENT KINDS of human label, so the
+  # replication is not just more data: EBench is a continuous 15-rater MOS, and
+  # ImagenHub is a 3-rater SC/PQ pair on a coarse 7-level scale.
+  human_anchor_blocks:
+    # Primary. 8 turns x 6 edit_types = 48 turns, 8 editors each = 384 samples and
+    # 48 * C(8,2) = 1,344 derivable pairs. Preferred over 4 turns x 17 editors,
+    # which costs the same 400-odd judged samples but leaves only 24 clusters —
+    # the CIs here are bootstrapped BY TURN, so clusters are the sample size that
+    # matters, and 1,344 pairs is already far past what the power analysis needs.
+    - source: EBench-18K
+      turns_per_edit_type: 8
+      models_per_turn: 8
+      require_human_score: true
+    # Replication. Availability-capped: ImagenHub has 160 rated turns, unevenly
+    # spread (add 73 / replace 48 / remove 17 / color 15 / background 7), so 6 per
+    # edit_type is the largest value that does not silently short a stratum.
+    # ~30 turns x 8 rated editors = ~240 samples, ~840 derivable pairs, 30 clusters.
+    # NOTE its SC is 70.5% pinned at 0.0 — correlate on PQ and the geometric
+    # overall, and report SC only as a binary hit rate.
+    - source: ImagenHub
+      turns_per_edit_type: 6
+      models_per_turn: 8
+      require_human_score: true
+
+  # Pairs are drawn independently (PairRecord is self-contained). Ordering is by
+  # `build_full_manifest.decisive_tier`: human-labelled AND decisive first, then
+  # human-labelled but too close to call, then unlabelled. "Decisive" is measured
+  # in SDs of that source's own human score (0.5 = a medium effect) because a
+  # single absolute threshold does not survive contact with the sources: EBench's
+  # rescaled MOS spans [0.225, 0.732], so |gap| > 0.2 called 4,464 of its 4,720
+  # pairs indecisive while passing ImagenHub's identically-meaningful gaps.
+  pairs_per_source_per_edit_type: 28
+  pairs_decisive_min_effect: 0.5
+  pairs_require_ground_truth: false
+  samples: data/manifests/samples_judge_v2.jsonl
+  pairs: data/manifests/pairs_judge_v2.jsonl

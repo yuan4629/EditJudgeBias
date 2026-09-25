@@ -1,0 +1,5 @@
+# Mock judge — offline, deterministic, no API key (Milestone 3).
+type: mock
+model_name: mock-judge
+response_style: valid     # valid | fenced | prose | invalid (parser robustness)
+seed: 0

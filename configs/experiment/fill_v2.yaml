@@ -1,0 +1,93 @@
+# Fill collection plan for `python -m edit_judge_bias.experiments.fill_runner`.
+#
+#   python -m edit_judge_bias.experiments.fill_runner plan               # free: counts and checks
+#   python -m edit_judge_bias.experiments.fill_runner run --use-api      # collect; re-run = resume
+#   python -m edit_judge_bias.experiments.fill_runner status | stop | verify
+#
+# The fill completes two partial condition grids of the main collection:
+#   * pairwise one-sided: +10 conditions (`pairwise_fill_v2.yaml`)
+#   * human-anchor scoring: +9 conditions (`scoring_anchor_fill_v2.yaml`)
+# on the five panel judges and the replication judge (qwen3-vl-32b-instruct, which stays
+# its own roster downstream). Targets, prompts and rows are built by the standard runners'
+# own functions, so a fill row is the row `run_scoring_judge` / `run_pairwise_judge` would
+# write for the same condition. What the orchestrator adds is (i) `done_trees`: a target
+# already answered in `results/v2` is never asked again, and (ii) one process for all
+# judges with a shared budget of in-flight upload bytes, classified retries and resume.
+#
+# Rows go to `results/v2_fill`, never to `results/v2`. The analysis reads them through
+# `build_claim_tables --fill-dir results/v2_fill` (see scripts/06_build_tables.sh).
+
+tree: results/v2_fill
+done_trees: [results/v2]
+failure_log: results/logs/fill_v2_failures.jsonl
+progress_log: results/logs/fill_v2_progress.log
+
+arms:
+  - name: pairwise_fill
+    task: pairwise
+    config: configs/experiment/pairwise_fill_v2.yaml
+    expect_new_per_judge: 6160       # 616 pairs x 10 conditions
+  - name: anchor_fill
+    task: scoring
+    config: configs/experiment/scoring_anchor_fill_v2.yaml
+    expect_new_per_judge: 5265       # 585 anchor-only samples x 9 conditions
+
+# All lanes work through conditions in this order, so a run that stops early leaves whole
+# conditions on every judge. `sham` comes early: a cue is readable only next to its
+# zero-dose control.
+priority: [region_annotation, sham, bandwagon, distraction, zoom_inset, detail_caption,
+           watermark, saturation, aesthetic_filter, model_name]
+
+# `unit_price_usd` (per call) only feeds the printed cost estimate and the optional
+# `tripwire.max_estimated_usd`. Set it to your endpoint's price to enable both.
+judges:
+  - config: configs/judge/gemini_flash_lite.yaml
+    concurrency: 24
+    max_concurrency: 24
+    unit_price_usd: 0.0
+  - config: configs/judge/gpt5_5.yaml
+    concurrency: 20
+    max_concurrency: 20
+    unit_price_usd: 0.0
+  - config: configs/judge/gpt4o_viescore.yaml
+    concurrency: 12
+    max_concurrency: 12
+    unit_price_usd: 0.0
+  - config: configs/judge/kimi_k25.yaml
+    concurrency: 16
+    max_concurrency: 16
+    unit_price_usd: 0.0
+  - config: configs/judge/qwen35_plus.yaml
+    concurrency: 12
+    max_concurrency: 12
+    unit_price_usd: 0.0
+  - config: configs/judge/qwen3vl_32b_instruct.yaml
+    concurrency: 12
+    max_concurrency: 12
+    unit_price_usd: 0.0
+
+transport:
+  max_inflight: 48
+  bytes_budget_mb: 24          # base64 bytes in flight across all lanes (start)
+  min_bytes_budget_mb: 20
+  max_bytes_budget_mb: 64
+  bytes_step_mb: 1
+  increase_every: 25           # successes per +1 lane slot / +1 MB
+  decrease_factor: 0.85
+  decrease_gap_s: 30
+  min_lane_limit: 24           # >= every max_concurrency: transport errors never shrink a lane
+  starvation_s: 20             # a big job skipped this long gets the freed bytes held for it
+
+retry:
+  attempts_per_round: 6
+  rounds: 4
+  timeout_multipliers: [1.0, 2.0, 3.0, 4.0]   # x the judge config's own timeout, per round
+  timeout_cap_s: 300
+  backoff_base_s: 4
+  backoff_cap_s: 180
+  refusal_attempts: 3          # some safety filters are probabilistic, others permanent
+  refusal_delay_s: 90
+  quota_errors_to_stop: 3
+
+tripwire:
+  max_estimated_usd: null      # stop when the estimated spend exceeds this (needs unit prices)

@@ -1,0 +1,42 @@
+# ARM ④: pairwise — the same question in the format judges are actually deployed
+# in, and the only arm where the human label is a real vote rather than a derived
+# preference.
+#
+# 616 pairs x 5 conditions = 3,080 calls/judge:
+#   1 baseline + 1 position swap (A1, a judge-protocol bias — no pixel changes)
+#   + 3 one-sided image biases (padding / text_overlay / brightness).
+#
+#   python scripts/make_pair_member_manifest.py \
+#     --pairs data/manifests/pairs_judge_v2.jsonl \
+#     --pool  data/manifests/samples_full_v2.jsonl \
+#     --out   data/manifests/samples_pair_members_v2.jsonl
+#   python -m edit_judge_bias.experiments.run_bias_injection \
+#     --config configs/experiment/bias_injection_pair_members_v2.yaml
+#   python -m edit_judge_bias.experiments.run_pairwise_judge \
+#     --config configs/experiment/pairwise_v2.yaml \
+#     --judge-config configs/judge/gpt5_5.yaml --use-api
+#
+# 438 of the 616 pairs carry a human preference that is decisive on that source's
+# own scale (GenAI-Bench arena votes, ImagenHub score gaps, EBench MOS gaps), so
+# the one-sided conditions support a *disagreement* rate against humans and not
+# merely a flip rate. That count was 187 before pair selection started ranking by
+# a scale-relative threshold.
+#
+# `side` is left unset so the biased slot is a seeded function of the pair id.
+# Always dressing slot A would make the one-sided effect inseparable from the
+# position bias being measured in the same run.
+
+pairs: data/manifests/pairs_judge_v2.jsonl
+include_position_swap: true
+one_sided_biases:
+  biased: data/manifests/biased_pair_members_v2.jsonl
+  bias_types: [padding, text_overlay, brightness]
+  # side: seeded per pair (omit to get that; "a"/"b" pins it for an ablation)
+
+prompt_style: vanilla
+judge_config: configs/judge/mock.yaml   # override per run with --judge-config
+raw_dir: results/v2/raw_responses
+results_dir: results/v2
+failure_log: results/logs/pairwise_v2_failures.jsonl
+seed: 42
+workers: 8

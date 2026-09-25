@@ -1,0 +1,20 @@
+# FILL v2 P4 -- validator A (gemini-3.5-flash, GATING) on the fill's NEW pair-member images.
+#
+# 110 bases x 8 conditions (7 one-sided image cues + sham) = 880 validations; every cue is
+# read against the sham floor on the SAME 110 pictures. The manifest is fixed by
+# scripts/prepare_fill_validation.py (seed 42), hence per_bias: 0.
+#
+# Writes only under results/v2_fill: never the published quality tree or a published summary.
+# PAID (needs --use-api), one validator process at a time:
+#   PYTHONPATH=src python -m edit_judge_bias.experiments.run_quality_validation \
+#     --config configs/experiment/quality_validation_fill_v2_p4_gemini.yaml --use-api
+samples: data/manifests/samples_full_v2.jsonl
+biased: data/manifests/quality_pair_members_fill_v2_p4.jsonl
+per_bias: 0
+seed: 42
+judge_config: configs/judge/gemini_flash_lite.yaml
+raw_dir: results/v2_fill/raw_responses_validation
+out_manifest: results/v2_fill/quality/validation__gemini-3.5-flash.jsonl
+summary_csv: results/v2_fill/metrics/quality_preservation_summary__p4_gemini.csv
+failure_log: results/logs/fill_v2_p4_gemini_failures.jsonl
+workers: 4

@@ -1,0 +1,8 @@
+# Instruction / keyword overlay bias — MVP setting.
+bias_type: text_overlay
+config:
+  mode: keyword        # "keyword" = salient word from the instruction; "instruction" = truncated instruction
+  band: top            # semi-transparent band at the top edge
+  opacity: 0.5
+  font_ratio: 0.05
+  max_words: 12        # used only when mode == instruction

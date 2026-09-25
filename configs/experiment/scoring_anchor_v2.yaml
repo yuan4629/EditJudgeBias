@@ -1,0 +1,42 @@
+# ARM ③: the human-anchor blocks — claim B, "the perturbation pushes the judge AWAY
+# from human judgement". This is what answers the question claim A cannot: is the
+# deflation a *justified* deduction?
+#
+# 624 samples (EBench-18K 384 + ImagenHub 240) x 5 conditions = 3,120 calls/judge.
+#
+#   python -m edit_judge_bias.experiments.run_scoring_judge \
+#     --config configs/experiment/scoring_anchor_v2.yaml \
+#     --judge-config configs/judge/gpt5_5.yaml --use-api
+#
+# Two sources on purpose. EBench-18K is a continuous 15-rater MOS with no floor
+# effect; ImagenHub is a coarse 3-rater SC/PQ on a different content pool. A claim
+# B that only holds on one of them is a single-source finding.
+# NOTE for the analysis: ImagenHub's SC is 70.5% pinned at 0.0 — correlate on PQ
+# and the geometric overall, and report SC only as a binary hit rate.
+#
+# Four biases, not ten: the anchor exists to measure agreement decay, and spending
+# its budget on the cues that actually moved the pilot judges buys a sharper
+# estimate than spreading it over ten. All ten are already injected, so widening
+# this list later costs only the extra calls.
+#
+# `anchor_source` rather than `subset_block: anchor` — 39 of these samples were
+# also drawn by the stratified take and keep `subset_block: breadth`, so filtering
+# on the block would silently drop them from claim B.
+
+samples: data/manifests/samples_judge_v2.jsonl
+biased: data/manifests/biased_samples_full_v2.jsonl
+subset_filter:
+  anchor_source: [EBench-18K, ImagenHub]
+bias_types: [padding, text_overlay, brightness, region_annotation]
+
+score_original: true
+score_biased: true
+prompt_style: vanilla
+score_scale: 10
+
+judge_config: configs/judge/mock.yaml   # override per run with --judge-config
+raw_dir: results/v2/raw_responses
+results_dir: results/v2
+failure_log: results/logs/scoring_anchor_v2_failures.jsonl
+seed: 42
+workers: 8

@@ -1,0 +1,15 @@
+# WP-A4a validator SENSITIVITY control — destroy the DETAIL inside the edit region.
+#
+# The second failure mode, and it probes a different validator question: `revert` breaks
+# instruction adherence (the edit is gone), `blur` leaves the edit in place and destroys
+# its detail preservation. A validator strong on one and blind to the other is a real and
+# reportable finding — its three questions are not one question.
+#
+# The blur is taken from the WHOLE frame and pasted back over the region, never computed
+# on the crop: convolving a crop against its own replicated edge leaves the region
+# boundary razor sharp, which is a renderer artefact rather than damage.
+bias_type: edit_damage_blur
+config:
+  mode: blur
+  severity: 1.0
+  region_threshold: 15

@@ -1,0 +1,10 @@
+# Aesthetic "beauty filter" bias — full-version B6.
+bias_type: aesthetic_filter
+config:
+  contrast: 1.1          # ImageEnhance.Contrast factor (1.0 = unchanged)
+  warm_shift: 8          # R +8 / B -8 point op (warm cast). Ablation: 4 / 8 / 12
+  # Sharpening radius as a fraction of the short edge (2.0px at 512px). A fixed
+  # pixel radius would make the perceived enhancement depend on resolution.
+  unsharp_radius_ratio: 0.00390625
+  unsharp_percent: 60
+  unsharp_threshold: 3
