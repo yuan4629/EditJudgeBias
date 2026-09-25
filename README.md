@@ -44,11 +44,9 @@ skin-lightness counterfactuals of the people in the images.
 
 ## Installation
 
-Python 3.10–3.12.
+Python 3.10–3.12. Download or clone the repository, then run from its root:
 
 ```bash
-git clone https://github.com/yuan4629/EditJudgeBias.git
-cd EditJudgeBias
 python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
 pip install -e ".[ingest,dev]" -c constraints.txt
 pytest -q                                             # offline; no data or API key needed

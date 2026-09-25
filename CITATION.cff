@@ -3,10 +3,7 @@ message: "If you use EditJudgeBias, please cite it as below."
 title: "EditJudgeBias: a counterfactual benchmark for bias in MLLM judges of instruction-based image editing"
 type: software
 authors:
-  - family-names: Huang
-    given-names: Yuan
-    email: huangyuan4629@gmail.com
-repository-code: "https://github.com/yuan4629/EditJudgeBias"
+  - name: "Anonymous Authors"
 license: MIT
 version: 1.0.0
 date-released: "2026-09-26"

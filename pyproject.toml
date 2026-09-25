@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "Counterfactual benchmark for bias in MLLM judges of instruction-based image editing"
 readme = "README.md"
 license = { file = "LICENSE" }
-authors = [{ name = "Yuan Huang", email = "huangyuan4629@gmail.com" }]
+authors = [{ name = "Anonymous Authors" }]
 requires-python = ">=3.10"
 keywords = ["benchmark", "image editing", "MLLM-as-a-judge", "evaluation", "bias"]
 classifiers = [
@@ -58,11 +58,6 @@ dev = [
     "pytest>=7.0",
     "ruff>=0.5",
 ]
-
-[project.urls]
-Homepage = "https://github.com/yuan4629/EditJudgeBias"
-Repository = "https://github.com/yuan4629/EditJudgeBias"
-Issues = "https://github.com/yuan4629/EditJudgeBias/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
