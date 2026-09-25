@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Fairness track: freeze the human construct-validity verdicts into a table. Free, local.
+# Exploratory: not part of the experiments reported in the submitted paper.
 #
 #   bash scripts/construct_validity.sh --dry-run   # coverage report, writes nothing
 #   bash scripts/construct_validity.sh             # writes the table

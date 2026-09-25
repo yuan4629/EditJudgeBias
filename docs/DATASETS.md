@@ -1,9 +1,16 @@
 # Datasets
 
 EditJudgeBias ships **no images and no annotations**. It is built from five public
-image-editing benchmarks, plus one more for the fairness track. You download each from its
+image-editing benchmarks, plus one more for an exploratory fairness track that is not part
+of the reported experiments. You download each from its
 owner under that owner's license, and the builders in `src/edit_judge_bias/data/` turn them
 into JSONL manifests.
+
+Most benchmark inputs are obtained from the five public source benchmarks.
+Exact reconstruction of the reported I2EBench component additionally
+requires the author-generated `fluxkontext` and `qwen_image_edit` outputs,
+which are not part of the upstream I2EBench release; see the I2EBench
+section below.
 
 All corpora live under `tmp_data/` in the repository root (git-ignored). **Keep that exact
 name.** Manifest paths are stored relative to the root (`tmp_data/...`), and those path
@@ -26,11 +33,11 @@ python scripts/verify_benchmark.py upstream
 | GenAI-Bench (image editing) | breadth block | Hugging Face Hub (automatic) | see the dataset card |
 | MagicBrush (dev split) | breadth block | Hugging Face Hub (automatic) | see the dataset card |
 | EBench-18K (LMM4Edit) | breadth block, human-anchor block | manual download | **no license declared**, see below |
-| OmniEdit-Filtered-1.2M | fairness track only | Hugging Face Hub (manual shards) | see the dataset card |
+| OmniEdit-Filtered-1.2M | exploratory fairness track only | Hugging Face Hub (manual shards) | see the dataset card |
 
 The breadth block is a stratified subset (source × edit type) used for the cross-source
 invariance analyses. The human-anchor block consists of samples with human quality ratings,
-used for the validity analyses. Both are drawn with seed 42 by
+used for the agreement analyses. Both are drawn with seed 42 by
 `build_full_manifest --config configs/data/full_v2.yaml`.
 
 Three of the sources share content. ImagenHub's rated items are a subset of MagicBrush dev,
@@ -58,7 +65,7 @@ tmp_data/
   ebench_meta/                            EBench-18K labels
     train_v.json train_e.json train_c.json train_yn.json
     test_v.json  test_e.json  test_c.json  test_yn.json
-  downloads/                              OmniEdit shards (fairness track only)
+  downloads/                              OmniEdit shards (exploratory fairness track only)
 ```
 
 The builders write the images they fetch (ImagenHub, GenAI-Bench, MagicBrush) under
@@ -91,12 +98,12 @@ The builders write the images they fetch (ImagenHub, GenAI-Bench, MagicBrush) un
 ### ImagenHub (Text-Guided Image Editing)
 
 - Images are fetched by the builder from the ImagenHub museum site repository
-  (`ChromAIca/ChromAIca.github.io`, `Museum/ImagenHub_Text-Guided_IE/`, branch `main`)
-  over raw.githubusercontent.com.
+  (`ChromAIca/ChromAIca.github.io`, `Museum/ImagenHub_Text-Guided_IE/`) over
+  raw.githubusercontent.com, pinned to commit `d5f553773f57bdb98cfe2ecf77312dd07c818fb6`
+  (`revision` in `configs/data/imagenhub.yaml`).
   - The GitHub tree listing is cached at `tmp_data/imagenhub_museum/tree_main.json` on the
     first run, because the unauthenticated API allows 60 requests/hour.
-  - The branch is not pinned, so `verify_benchmark.py upstream` and `sources` are the check
-    that you received the same files.
+  - `verify_benchmark.py upstream` and `sources` check that you received the same files.
 - The instruction lookup and the three raters' scores (`dataset_lookup.json`,
   `dataset_lookup.csv`, `rater{1,2,3}.tsv`) come from ImagenHub's released human-evaluation
   data. Place them in `tmp_data/imagenhub_meta/` and check them with
@@ -130,7 +137,7 @@ The builders write the images they fetch (ImagenHub, GenAI-Bench, MagicBrush) un
   per-editor claim can be made from this source.
 - Config: `configs/data/ebench18k.yaml`.
 
-### OmniEdit-Filtered-1.2M (fairness track only)
+### OmniEdit-Filtered-1.2M (exploratory fairness track only)
 
 - Hugging Face `TIGER-Lab/OmniEdit-Filtered-1.2M`, split `train`. The fairness pool uses a
   fixed set of 15 shards. Their file names, sha256 and row counts are frozen in

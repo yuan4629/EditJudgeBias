@@ -104,14 +104,18 @@ def is_retest_repeat(result: JudgeResult) -> bool:
     return int((result.bias_params or {}).get("repeat_index", 1)) > 1
 
 
-def retest_pairs(results: Iterable[JudgeResult]) -> Dict[Tuple[str, str], List[int]]:
+def retest_pairs(
+    results: Iterable[JudgeResult], *, score_field: Optional[str] = None
+) -> Dict[Tuple[str, str], List[int]]:
     """(judge_model, sample_id) -> the scores of each ask, first pass first.
 
     The arm's whole output. Keeping the reader next to the filter that hides these
     rows from every other metric is deliberate: they are excluded from the main
-    tables, not discarded.
+    tables, not discarded. `score_field` defaults to :func:`resolve_score_field`; pass
+    a single dimension (e.g. `instruction_adherence`) to read that rating instead.
     """
-    field = resolve_score_field(list(results))
+    results = list(results)
+    field = score_field or resolve_score_field(results)
     out: Dict[Tuple[str, str], List[Tuple[int, int]]] = {}
     for r in results:
         value = getattr(r, field, None)

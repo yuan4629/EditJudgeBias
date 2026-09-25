@@ -244,6 +244,11 @@ def aggregate_human_score(
 # --------------------------------------------------------------------------- #
 # Museum file listing + download                                               #
 # --------------------------------------------------------------------------- #
+def museum_ref(mus: dict) -> str:
+    """The museum revision to read: the pinned commit (`revision`), else `branch`."""
+    return str(mus.get("revision") or mus["branch"])
+
+
 def load_tree(cfg: dict, root: Path, *, allow_network: bool = True) -> Dict[str, int]:
     """Return `{repo_path: size_bytes}` for the museum subtree.
 
@@ -259,7 +264,7 @@ def load_tree(cfg: dict, root: Path, *, allow_network: bool = True) -> Dict[str,
             )
         url = (
             f"https://api.github.com/repos/{mus['repo']}/git/trees/"
-            f"{mus['branch']}?recursive=1"
+            f"{museum_ref(mus)}?recursive=1"
         )
         req = urllib.request.Request(
             url,
@@ -318,7 +323,7 @@ def download_museum_files(
     timeout = float(dl.get("timeout", 60))
     base = cfg["museum"].get("raw_base", "https://raw.githubusercontent.com").rstrip("/")
     repo = cfg["museum"]["repo"]
-    branch = cfg["museum"]["branch"]
+    ref = museum_ref(cfg["museum"])
 
     todo: List[Tuple[str, Path]] = []
     for repo_path, dest, expected in jobs:
@@ -331,7 +336,7 @@ def download_museum_files(
 
     def one(job: Tuple[str, Path]) -> Tuple[str, Optional[int]]:
         repo_path, dest = job
-        url = f"{base}/{repo}/{branch}/{urllib.parse.quote(repo_path)}"
+        url = f"{base}/{repo}/{ref}/{urllib.parse.quote(repo_path)}"
         try:
             return repo_path, _fetch(url, dest, retries=retries, timeout=timeout)
         except Exception as exc:  # noqa: BLE001 - log, never abort the batch

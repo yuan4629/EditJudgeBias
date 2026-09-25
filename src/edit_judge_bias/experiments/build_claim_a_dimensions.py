@@ -1,8 +1,8 @@
 """Claim A decomposed into the three dimensions the judge was actually asked for.
 
 WHY THIS TABLE EXISTS. The single question every reviewer puts to this paper is
-**"is that deflation a bias, or is it a justified deduction?"**, and the headline
-variable cannot answer it: `fine_score` is the SUM of three dimensions
+**"is that deflation a bias, or is it a justified deduction?"**, and the summed
+score cannot answer it: `fine_score` is the SUM of three dimensions
 (`data/schema.py:210-212`), so a cue that genuinely degrades the picture and a cue
 that merely distracts the judge both show up as one negative number.
 
@@ -28,12 +28,13 @@ judge rubric states (preserve irrelevant regions). That gap is a limitation to r
 not something this table repairs. What the table does is separate the part of the
 effect that survives the gap from the part that does not.
 
-DECOMPOSITION, NOT A SUBSTITUTE. Every cell is computed on the SAME complete-case
+SAME SAMPLE AS CLAIM A. Every cell is computed on the SAME complete-case
 subset `claim_a.csv` uses — rows where all three dimensions parsed, i.e. exactly the
 rows that have a `fine_score` — so the three `mean_shift` values ADD UP to the
-published headline for that cell, to the last decimal. The pre-registered analysis
-variable is still `fine_score`; this is an addition, never a replacement, and
+`claim_a.csv` headline for that cell, to the last decimal, and
 `tests/test_claim_a_dimensions.py` pins the identity so it cannot quietly stop holding.
+The per-dimension `asc` column is the statistic of the paper's main invariance table;
+`build_noise_floor_table` reads it against the `sham` and retest noise floors.
 
 BH: one declared family per dimension (`claim_A_instruction_adherence`, ...), each of
 the same shape as `claim_A` — 12 cues x the roster, with `sham` held out as the control

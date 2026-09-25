@@ -20,6 +20,7 @@ from edit_judge_bias.data.build_imagenhub import (
     build_pair_records,
     build_samples,
     load_ratings,
+    museum_ref,
     parse_rating_cell,
     parse_uid,
 )
@@ -365,3 +366,12 @@ def test_dry_run_writes_nothing(tmp_path: Path):
     cfg_path.write_text(yaml.safe_dump(cfg), encoding="utf-8")
     build(cfg_path, root=tmp_path, dry_run=True)
     assert not (tmp_path / "data/manifests/samples_imagenhub.jsonl").exists()
+
+
+def test_museum_reads_the_pinned_commit():
+    """The shipped config pins a commit; `branch` is only the fallback."""
+    root = Path(__file__).resolve().parents[1]
+    cfg = yaml.safe_load((root / "configs/data/imagenhub.yaml").read_text(encoding="utf-8"))
+    assert museum_ref(cfg["museum"]) == "d5f553773f57bdb98cfe2ecf77312dd07c818fb6"
+    assert museum_ref({"branch": "main"}) == "main"
+    assert museum_ref({"revision": "abc", "branch": "main"}) == "abc"

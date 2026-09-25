@@ -42,8 +42,8 @@ itself. That includes:
 - path handling;
 - a dependency pin.
 
-Such changes must say so in the pull request and in `CHANGELOG.md`, bump the benchmark
-version, and regenerate `data/provenance/benchmark_v2_fingerprints.json` under a new name.
+Such changes must say so in the pull request, bump the benchmark version, and regenerate
+`data/provenance/benchmark_v2_fingerprints.json` under a new name.
 Verify an unchanged benchmark with `python scripts/verify_benchmark.py all`.
 
 ## Data

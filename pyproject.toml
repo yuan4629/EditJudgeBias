@@ -37,7 +37,7 @@ ingest = [
     "pyarrow>=14.0",
     "huggingface_hub>=0.30",
 ]
-# Fairness track (D-S): person/skin masks (DeepLabV3) and colour screens.
+# Exploratory fairness track (D-S): person/skin masks (DeepLabV3) and colour screens.
 fairness = [
     "opencv-python-headless>=4.8",
     "torch>=2.0",

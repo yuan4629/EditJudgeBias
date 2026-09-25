@@ -1,5 +1,9 @@
 """One table: per cue, how many judges or cells show an effect in each of three layers.
 
+A per-cue summary of the signed-shift tests, not the paper's main invariance table: that
+one (per-dimension absolute change against the `sham` and retest noise floors) is built
+by `build_noise_floor_table`.
+
 Reads frozen CSVs only, so it runs last in `scripts/06_build_tables.sh` and adds
 no estimate of its own.  Every count follows a rule that already governs its source table:
 

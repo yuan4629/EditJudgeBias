@@ -9,14 +9,17 @@ verdicts can be moved by cues that have nothing to do with editing quality. It t
 into the edited image or into the judge prompt. It then measures whether the judge's score
 or pairwise preference moves when it should not.
 
-A cue only counts if it provably leaves the edit's quality unchanged. Every cue image
-therefore goes through a **quality-preservation check**: a separate MLLM validation call,
-never part of the judge evaluation. That check is read against a zero-dose `sham` floor and
-against edit-damage positive controls.
+A cue is analyzed only with supporting quality-preservation evidence.
+Image-side cues are assessed using separate MLLM validators, sham and
+edit-damage controls, and human checks, independently of judge evaluation.
+These checks provide cue-level preservation evidence rather than certifying
+every individual image.
 
 This repository contains the code to build the benchmark, run judges on it, and analyse
-the results. **It contains no data**: the images come from public editing benchmarks you
-download from their owners (see [docs/DATASETS.md](docs/DATASETS.md)). Published
+the results. **It contains no data**: most images come from public editing benchmarks you
+download from their owners. Exact reconstruction of the I2EBench component also needs two
+author-generated editor outputs that are not in the public I2EBench release (see
+[docs/DATASETS.md](docs/DATASETS.md)). Published
 fingerprints let you check that your rebuild matches ours ([Reproducing the
 benchmark](#reproducing-the-benchmark)).
 
@@ -33,14 +36,18 @@ Thirteen conditions plus a placebo, grouped by where the cue enters the judge's 
 | Prompt | `bandwagon` (fabricated majority opinion), `model_name` (the editor is named) |
 | Placebo | `sham` (JPEG round trip; the zero-dose control every effect is read against) |
 
-The same cues are read in two ways:
+The audit reports three complementary dimensions:
 
-- **Invariance:** does the judge's absolute score move?
-- **Validity:** does the judge's agreement with human rankings change?
+- **Invariance:** how much do quality-preserving cues change the judge's ratings?
+- **Agreement:** how do those cues change agreement with human judgments?
+- **Stability:** are pairwise preferences preserved under A/B display-order swaps?
+
+The main invariance table (`invariance_noise_floor.csv`, stage 6) reads each judge's
+per-dimension rating change against two noise floors of that judge's own: the `sham`
+control and a re-query of 200 identical un-cued inputs.
 
 Judges are evaluated in two protocols: single-image **scoring** (three dimensions on a 1–10
-scale) and **pairwise** preference. A separate **fairness track** injects deterministic
-skin-lightness counterfactuals of the people in the images.
+scale) and **pairwise** preference.
 
 ## Installation
 
@@ -56,7 +63,8 @@ pytest -q                                             # offline; no data or API 
 The extras are:
 
 - `ingest`: downloading corpora from the Hugging Face Hub.
-- `fairness`: person/skin masks for the fairness track (torch, torchvision, OpenCV).
+- `fairness`: person/skin masks for the exploratory fairness track (torch, torchvision,
+  OpenCV).
 - `overlap`: the source-admission near-duplicate gate.
 - `perceptual`: optional LPIPS/CLIP preservation metrics.
 
@@ -68,7 +76,7 @@ configs/               YAML that drives every step (no behaviour is hard-coded)
   bias/                one file per cue (injector parameters)
   judge/               one file per judge / validator (model id, decoding settings)
   experiment/          one file per arm (which manifest, which cues, where results go)
-  fairness/            the fairness track
+  fairness/            exploratory fairness track (see below)
 data/provenance/       tracked provenance metadata: benchmark fingerprints, dataset locks
 scripts/               the pipeline in stage order, plus helpers (see scripts/README.md)
 src/edit_judge_bias/   the package
@@ -78,7 +86,7 @@ src/edit_judge_bias/   the package
   prompts/             scoring, pairwise and validator prompt builders
   metrics/             scoring, pairwise, agreement and preservation metrics, statistics
   experiments/         CLI runners and table builders
-  fairness/            attribute injectors, person/skin regions, ITA colour metric
+  fairness/            exploratory fairness track (see below)
   visualization/       figures
 tests/                 unit and integration tests (synthetic fixtures only)
 docs/                  datasets, reproduction guide, cue catalogue, architecture
@@ -148,6 +156,13 @@ reproducible byte for byte, and how to diagnose a mismatch:
 
 For a non-OpenAI API, implement `JudgeAdapter` (`src/edit_judge_bias/judges/base.py`) and
 add it to `build_adapter` in `judges/__init__.py`. `MockJudgeAdapter` is a minimal example.
+
+## Exploratory code
+
+The fairness track (`configs/fairness/`, `src/edit_judge_bias/fairness/`,
+`scripts/fairness_ds.sh`, `scripts/fairness_dg.sh`, `scripts/construct_validity.sh`) contains
+exploratory analyses that are not part of the experiments reported in the submitted paper.
+Stages 1–7 do not run it.
 
 ## Citation
 

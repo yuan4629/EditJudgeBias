@@ -36,6 +36,10 @@ python -m edit_judge_bias.experiments.build_claim_a_dimensions \
 python -m edit_judge_bias.experiments.build_mitigation_tables \
   --results-dir "$R" --samples "$S" "${BREADTH[@]}" "${FULL[@]}"
 
+echo ">> main invariance table: per-dimension |change| against the sham and retest floors"
+python -m edit_judge_bias.experiments.build_noise_floor_table \
+  --results-dir "$R" --samples "$S" "${BREADTH[@]}"
+
 echo ">> sensitivity analyses (read the tables above)"
 # The exclusion analysis reads the mask-polarity audit; rebuild it if absent.
 [ -f "$R/metrics/mask_polarity_audit.json" ] || python scripts/audit_mask_polarity.py

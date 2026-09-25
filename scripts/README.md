@@ -16,7 +16,10 @@ Run everything from the repository root. Each shell script `cd`s there itself an
 | `07_plot_figures.sh` | every figure | free |
 | `verify_benchmark.py {upstream,manifests,sources,images,all}` | compare a rebuild with the published fingerprints | free |
 
-## Fairness track
+## Fairness track (exploratory)
+
+These scripts run exploratory analyses that are not part of the experiments reported in the
+submitted paper.
 
 | Script | Purpose |
 |---|---|

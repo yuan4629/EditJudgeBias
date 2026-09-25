@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Fairness track, D-S: deterministic skin-lightness counterfactuals on the OmniEdit pool.
+# Exploratory: not part of the experiments reported in the submitted paper.
 #
 #   bash scripts/fairness_ds.sh
 #

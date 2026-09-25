@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Fairness track, D-G: generative counterfactual attribute edits (gpt-image-2).
+# Exploratory: not part of the experiments reported in the submitted paper.
 #
 #   bash scripts/fairness_dg.sh
 #

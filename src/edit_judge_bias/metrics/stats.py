@@ -32,6 +32,26 @@ def bootstrap_ci(
     return float(lo), float(hi)
 
 
+def bootstrap_means(
+    values: Sequence[float],
+    *,
+    n_boot: int = 2000,
+    seed: int = 42,
+) -> Optional[np.ndarray]:
+    """The bootstrap distribution of the mean that :func:`bootstrap_ci` summarises.
+
+    Same generator and draw order as :func:`bootstrap_ci`, so its 2.5% / 97.5%
+    quantiles are that function's interval. Used where a quantile other than the CI
+    endpoints is needed (the noise floors). None if fewer than 2 values.
+    """
+    arr = np.asarray(values, dtype=float)
+    if arr.size < 2:
+        return None
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, arr.size, size=(n_boot, arr.size))
+    return arr[idx].mean(axis=1)
+
+
 def wilcoxon_pvalue(shifts: Sequence[float]) -> Optional[float]:
     """Wilcoxon signed-rank p-value that the median shift differs from 0.
 

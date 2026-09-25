@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Stage 7 -- render every figure from the metric tables. Free, local, idempotent.
 #
-#   bash scripts/07_plot_figures.sh                # results/v2 and results/v2_fairness_ds
-#   bash scripts/07_plot_figures.sh <results_dir>  # one tree
+#   bash scripts/07_plot_figures.sh                # results/v2
+#   bash scripts/07_plot_figures.sh <results_dir>  # another tree, e.g. the exploratory
+#                                                  # results/v2_fairness_ds
 #
 # Run after stages 5 and 6 (it reads tables from both). Each entry point prints "skip ..."
 # and exits 0 on a tree that lacks the tables it needs.
@@ -21,15 +22,16 @@ render() {
     --metrics-dir "$base/metrics" --figures-dir "$base/figures"
   python -m edit_judge_bias.visualization.plot_robustness_layers \
     --metrics-dir "$base/metrics" --figures-dir "$base/figures"
-  python -m edit_judge_bias.visualization.plot_construct_validity \
-    --metrics-dir "$base/metrics" --figures-dir "$base/figures"
   python -m edit_judge_bias.visualization.plot_leaderboard \
     --metrics-dir "$base/metrics" --figures-dir "$base/figures"
+  if [ -f "$base/metrics/construct_validity.csv" ]; then   # exploratory fairness track only
+    python -m edit_judge_bias.visualization.plot_construct_validity \
+      --metrics-dir "$base/metrics" --figures-dir "$base/figures"
+  fi
 }
 
 if [ "$#" -ge 1 ]; then
   render "$1"
 else
   render results/v2
-  render results/v2_fairness_ds
 fi

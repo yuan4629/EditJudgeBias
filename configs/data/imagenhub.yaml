@@ -9,7 +9,9 @@ source_dataset: ImagenHub
 
 museum:
   repo: ChromAIca/ChromAIca.github.io
-  branch: main
+  # The commit of `main` the benchmark was built from (2025-12-02). Pinned so a rebuild
+  # reads the same files even if the branch moves.
+  revision: d5f553773f57bdb98cfe2ecf77312dd07c818fb6
   subtree: Museum/ImagenHub_Text-Guided_IE
   input_dir: input                 # original images live here (528 files; 179 used)
   raw_base: https://raw.githubusercontent.com

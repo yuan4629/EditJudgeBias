@@ -52,8 +52,16 @@ A scoring judge rates an edit on three dimensions, each on a 1–10 scale:
 - editing quality;
 - detail preservation.
 
-`fine_score` is their sum (3–30), and `overall_score` is the judge's single overall rating.
-Most invariance analyses read `fine_score`.
+`fine_score` is the sum of the three dimension ratings (3–30), while
+`overall_score` is the judge's separate overall rating. The headline
+invariance analysis uses the three dimension ratings individually;
+some auxiliary analyses use `fine_score`.
+
+The headline table is `invariance_noise_floor.csv` (`build_noise_floor_table`). Each cell
+is 10 × the mean absolute per-item change in one rating. Each judge has two floors per
+rating, the `sham` change and the retest change, each taken as the 20th percentile of 2000
+bootstrap means. A cell is marked by how many floors its 95% bootstrap lower bound
+exceeds.
 
 ## Result trees
 
@@ -70,7 +78,7 @@ results/
   v2_control/              validator edit-damage controls
   v2_ablation/             C-class validator template ablation
   v2_ablation_control/     the ablation template on the edit-damage controls
-  v2_fairness/, v2_fairness_ds/   fairness track
+  v2_fairness/, v2_fairness_ds/   exploratory fairness track (not in the paper)
   cache/                   request cache (safe to delete; re-runs then call the API again)
 ```
 
@@ -98,7 +106,7 @@ q-value changes when the fill is added.
 | `judges/` | `JudgeAdapter`, `MockJudgeAdapter`, the OpenAI-compatible adapter, the tolerant JSON parser |
 | `metrics/` | score shifts, pairwise flip rates, agreement with humans, preservation metrics, statistics (Wilcoxon, McNemar, Benjamini–Hochberg, bootstrap intervals) |
 | `experiments/` | runners (`run_*`), the fill orchestrator, and all table builders (`build_*`, `aggregate_results`) |
-| `fairness/` | attribute injectors, person/skin regions, ITA skin-tone metric, image-edit client |
+| `fairness/` | exploratory fairness track: attribute injectors, person/skin regions, ITA skin-tone metric, image-edit client |
 | `visualization/` | figures |
 
 ## Glossary of arm labels
@@ -107,8 +115,8 @@ Code comments and some config names refer to experiment arms by short labels:
 
 | Label | Meaning |
 |---|---|
-| claim A | invariance: does a cue shift the judge's score? (`claim_a*.csv`) |
-| claim B | validity: does a cue change the judge's agreement with human rankings? (`claim_b*.csv`) |
+| claim A | invariance: does a cue shift the judge's score? (`claim_a*.csv`, `invariance_noise_floor.csv`) |
+| claim B | agreement: does a cue change the judge's agreement with human rankings? (`claim_b*.csv`) |
 | A- / B- / C- / D-class | prompt-level cues / global pixel cues / cues near the edit region / fairness attributes |
 | breadth, anchor | the stratified cross-source block, and the block of samples with human ratings |
 | fill | the second collection that completed the anchor and one-sided pairwise grids (`results/v2_fill`) |
@@ -120,7 +128,7 @@ Code comments and some config names refer to experiment arms by short labels:
 | WP-A4c/d | the C-class validator template ablation, and the same template on the edit-damage controls |
 | WP-A5 | the replication judge (`qwen3-vl-32b-instruct`, roster `a5`) |
 | WP-A6 | the second human preservation package and its second annotator (inter-annotator agreement) |
-| D-S, D-G | fairness track: deterministic skin-lightness counterfactuals, generative attribute edits |
+| D-S, D-G | exploratory fairness track: deterministic skin-lightness counterfactuals, generative attribute edits |
 
 ## Section references in comments
 
@@ -140,5 +148,5 @@ repository. The design-plan sections cited most often are:
 | §13 | pilot decision thresholds |
 
 In the analysis builders, `§5.7` (validator floors and controls), `§6.5` (the fairness
-null) and correlation-related `§7.2` usually refer to the paper. The surrounding comment
-makes clear which is meant.
+null) and correlation-related `§7.2` refer to section numbers of an earlier draft of the
+paper. The surrounding comment makes clear what is meant.
