@@ -15,7 +15,7 @@
 # NOT injected here, by design:
 #   - `position`      — a pairwise-protocol bias (A/B order swap), no pixel change;
 #                       run_pairwise_judge handles it via include_position_swap.
-#   - `bandwagon` / `self_preference` — prompt-level (A-class) biases; they live in
+#   - `bandwagon` / `model_name` — prompt-level (A-class) biases; they live in
 #                       the prompt builders, not the image pipeline.
 
 samples: data/manifests/samples_judge_v2.jsonl

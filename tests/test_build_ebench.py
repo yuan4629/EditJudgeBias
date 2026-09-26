@@ -89,8 +89,8 @@ def tree(tmp_path: Path):
             for model in MODELS:
                 _image(imgs / f"sourceimg_{level}" / model / f"{stem}.jpg", colour)
                 _image(imgs / f"targetimg_{level}" / model / f"{stem}.jpg", colour + 3)
-                ref = [f"/mnt/data/xzt/MM/editing_all/sourceimg_{level}/{model}/{stem}.jpg",
-                       f"/mnt/data/xzt/MM/editing_all/targetimg_{level}/{model}/{stem}.jpg"]
+                ref = [f"/upstream/prefix/editing_all/sourceimg_{level}/{model}/{stem}.jpg",
+                       f"/upstream/prefix/editing_all/targetimg_{level}/{model}/{stem}.jpg"]
                 base = 40 + idx
                 query = (f"With the image editing prompt [{instruction}], the source image "
                          "<image> is edited ... reply [The quality score is XX.XX]")
@@ -131,9 +131,18 @@ def test_qa_parsing(response, expected):
     assert parse_qa(response) is expected
 
 
-def test_image_ref_survives_the_authors_absolute_paths():
-    assert parse_image_ref("/mnt/data/xzt/MM/editing_all/sourceimg_h/model10/H_11_12.jpg") \
+@pytest.mark.parametrize("prefix", [
+    "/upstream/prefix/editing_all/",           # an absolute path from another machine
+    "/a/much/deeper/upstream/prefix/editing_all/",
+    "relative/prefix/",
+    "",
+])
+def test_image_ref_uses_only_the_tail_whatever_the_prefix(prefix):
+    assert parse_image_ref(f"{prefix}sourceimg_h/model10/H_11_12.jpg") \
         == ("h", "model10", "H_11_12")
+
+
+def test_image_ref_rejects_a_path_without_the_expected_tail():
     assert parse_image_ref("nothing/useful.png") is None
 
 

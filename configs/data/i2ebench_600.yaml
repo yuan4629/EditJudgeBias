@@ -1,7 +1,7 @@
 # I2EBench ingestion config — FULL-VERSION subset (source A of the 3-source blend).
 #
-# Identical to i2ebench.yaml except `pilot.groups_per_edit_type: 10`, which yields
-# 6 edit_types x 10 groups x ~10 models ~= 600 samples. Because select_pilot()
+# Identical to the pilot config (not shipped) except `pilot.groups_per_edit_type: 10`,
+# which yields 6 edit_types x 10 groups x ~10 models ~= 600 samples. Because select_pilot()
 # seeded-shuffles each edit_type's group keys and takes the first N, this 600-sample
 # subset is a strict SUPERSET of the 480-sample pilot (same seed => same shuffle
 # order) — so the already-injected biased images and already-paid judge calls for
@@ -39,10 +39,13 @@ content_category_map:
 
 default_content_category: global
 
+# [] = every editor folder found under EditResult/<Category>/. Two of the ten the benchmark
+# used, `fluxkontext` and `qwen_image_edit`, are our own outputs and not in the public
+# I2EBench release (docs/DATASETS.md); without them this draws 480 rows, not 600.
 edit_models: []
 
 pilot:
-  seed: 42                    # MUST match i2ebench.yaml for the superset property
+  seed: 42                    # MUST stay 42 (the pilot's seed) for the superset property
   groups_per_edit_type: 10    # 8 -> 10 (pilot 480 -> full-version 600)
   max_models_per_group: 10
 

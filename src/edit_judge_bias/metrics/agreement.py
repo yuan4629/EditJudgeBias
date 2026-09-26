@@ -1,7 +1,8 @@
 """Judge-human agreement, before and after a bias (claim B).
 
-Claim A shows the judge's score *moves* under a perturbation that provably did not
-change editing quality. The obvious rebuttal is that the deduction was justified —
+Claim A shows the judge's score *moves* under a perturbation designed not to change
+editing quality (checked per cue on a validator sample, not certified per image). The
+obvious rebuttal is that the deduction was justified —
 the padded image really is worse. This module answers that: if the perturbation
 pushed the judge **away from human judgement**, the deduction was not a correction.
 
@@ -26,8 +27,9 @@ why the human-anchor blocks are drawn as whole turns
 
 Novelty note for the write-up: recomputing judge-human agreement under
 perturbation is NOT new — it has been done at least five times. What is defensible
-here is the three-way conjunction: a quality-preserving perturbation, preservation
-*verified* independently, and agreement recomputed. Never claim a first.
+here is the three-way conjunction: a perturbation designed to preserve quality,
+preservation checked independently (per cue, on a sample), and agreement recomputed.
+Never claim a first.
 """
 
 from __future__ import annotations
@@ -76,6 +78,32 @@ def spearman(xs: Sequence[float], ys: Sequence[float]) -> Optional[float]:
     return None if rho is None or math.isnan(float(rho)) else float(rho)
 
 
+def cluster_bootstrap_values(
+    clusters: Sequence[Sequence],
+    stat_fn: Callable[[List], Optional[float]],
+    *,
+    n_boot: int = 1000,
+    seed: int = 42,
+) -> List[float]:
+    """The statistic on `n_boot` resamples of whole CLUSTERS (undefined draws dropped).
+
+    The draws :func:`cluster_bootstrap_ci` takes its percentiles from, exposed so that a
+    bootstrap p-value can be read off the same resamples as the interval.
+    """
+    if len(clusters) < 2:
+        return []
+    rng = np.random.default_rng(seed)
+    n = len(clusters)
+    values: List[float] = []
+    for _ in range(n_boot):
+        idx = rng.integers(0, n, size=n)
+        items = [item for i in idx for item in clusters[i]]
+        val = stat_fn(items)
+        if val is not None and not math.isnan(val):
+            values.append(val)
+    return values
+
+
 def cluster_bootstrap_ci(
     clusters: Sequence[Sequence],
     stat_fn: Callable[[List], Optional[float]],
@@ -89,21 +117,27 @@ def cluster_bootstrap_ci(
     Resampling items instead would treat 8 editors of one turn as 8 independent
     observations and report an interval roughly sqrt(8) times too narrow.
     """
-    if len(clusters) < 2:
-        return None
-    rng = np.random.default_rng(seed)
-    n = len(clusters)
-    values: List[float] = []
-    for _ in range(n_boot):
-        idx = rng.integers(0, n, size=n)
-        items = [item for i in idx for item in clusters[i]]
-        val = stat_fn(items)
-        if val is not None and not math.isnan(val):
-            values.append(val)
+    values = cluster_bootstrap_values(clusters, stat_fn, n_boot=n_boot, seed=seed)
     if len(values) < 2:
         return None
     lo, hi = np.quantile(values, [alpha / 2, 1 - alpha / 2])
     return float(lo), float(hi)
+
+
+def bootstrap_p_two_sided(values: Sequence[float], null: float = 0.0) -> Optional[float]:
+    """Two-sided bootstrap p-value for `null`, from the replicate values.
+
+    ``2 * (min(#{v <= null}, #{v >= null}) + 1) / (B + 1)``, capped at 1. The ``+1`` keeps
+    the p-value above zero when no replicate crosses the null, so the smallest attainable
+    value is ``2 / (B + 1)`` (0.002 at B = 1000). It inverts the same percentile bootstrap
+    the interval comes from; it is not an exact test.
+    """
+    b = len(values)
+    if b < 2:
+        return None
+    at_or_below = sum(1 for v in values if v <= null)
+    at_or_above = sum(1 for v in values if v >= null)
+    return min(1.0, 2.0 * (min(at_or_below, at_or_above) + 1) / (b + 1))
 
 
 # --------------------------------------------------------------------------- #

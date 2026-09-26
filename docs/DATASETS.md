@@ -1,14 +1,14 @@
 # Datasets
 
-EditJudgeBias ships **no images and no annotations**. It is built from five public
-image-editing benchmarks. You download each from its owner under that owner's license, and the builders in `src/edit_judge_bias/data/` turn them
-into JSONL manifests.
+EditJudgeBias ships **no images and no annotations**: no original, edited or rendered cue
+images, no human labels, and no upstream metadata files. It is built from five public
+image-editing benchmarks. You download each from its owner under that owner's license, and
+the builders in `src/edit_judge_bias/data/` turn them into JSONL manifests.
 
-Most benchmark inputs are obtained from the five public source benchmarks.
-Exact reconstruction of the reported I2EBench component additionally
-requires the author-generated `fluxkontext` and `qwen_image_edit` outputs,
-which are not part of the upstream I2EBench release; see the I2EBench
-section below.
+The five public benchmarks provide almost every input. The exception is the I2EBench
+component: exact reconstruction also needs the outputs of two editors, `fluxkontext` and
+`qwen_image_edit`, that we generated ourselves. They are not part of the upstream I2EBench
+release and are not distributed here; see the I2EBench section below.
 
 All corpora live under `tmp_data/` in the repository root (git-ignored). **Keep that exact
 name.** Manifest paths are stored relative to the root (`tmp_data/...`), and those path
@@ -78,10 +78,19 @@ The builders write the images they fetch (ImagenHub, GenAI-Bench, MagicBrush) un
   draws 600 samples (seed 42).
 - **Two editor folders are not in the upstream release.** The benchmark uses ten editor
   folders: `any2pix`, `hive`, `hqedit`, `iedit`, `instruct-diffusion`, `instructpix2pix`,
-  `magicbrush` and `mgie` are upstream. `fluxkontext` and `qwen_image_edit` were generated
-  by the benchmark authors and are not part of the public release. Without them the
-  I2EBench draw shrinks from 600 to 480 rows and the judged subset changes. `verify_benchmark.py sources` reports the affected groups as
-  `I2EBench/fluxkontext` and `I2EBench/qwen_image_edit`.
+  `magicbrush` and `mgie` are upstream. `fluxkontext` and `qwen_image_edit` hold edits of
+  the I2EBench inputs that we generated ourselves; they are not part of the public release,
+  and no public dataset contains them. The builder uses every editor folder it finds under
+  `EditResult/<Category>/`, so without these two:
+  - `samples_i2e600.jsonl` has 480 rows instead of 600;
+  - the I2EBench strata of the judged subset and of the pairs are drawn from a different
+    candidate list, so they differ, and so do the cue images rendered from them;
+  - the validators' seeded 110-image draws share one generator across cues, so they change
+    for every cue.
+
+  Strata of the other sources have their own seeds and are unaffected.
+  `verify_benchmark.py sources` reports the missing groups as `I2EBench/fluxkontext` and
+  `I2EBench/qwen_image_edit`.
 - **Known issue — instruction variant.** Upstream, `EditResult/` holds edits made from each
   item's *diverse* instruction (`div_exp`), and `EditResult_ori/` holds edits made from the
   *original* instruction (`ori_exp`). The benchmark reads images from `EditResult/` but
@@ -135,6 +144,8 @@ The builders write the images they fetch (ImagenHub, GenAI-Bench, MagicBrush) un
 
 ## Inputs that cannot be rebuilt from these datasets
 
-Some published analyses depend on inputs no downloadable dataset provides. The code runs
-without them: the dependent tables are skipped, or clearly re-derived. The published
+Some published analyses depend on inputs no downloadable dataset provides: the two
+self-generated I2EBench editor folders above, the judge and validator verdicts with their
+raw responses, the human preservation labels, and one frozen measurement file. The code
+runs without them: the dependent tables are skipped, or clearly re-derived. The published
 numbers need them, though. See [REPRODUCTION.md](REPRODUCTION.md#inputs-outside-this-repository).

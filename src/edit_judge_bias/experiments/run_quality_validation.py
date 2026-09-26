@@ -10,7 +10,7 @@ pairwise experiment. Resumable (skips already-validated biased_ids), fail-soft o
 API errors, and gated behind --use-api. Writes per-bias pass-rate + SSIM summary.
 
     python -m edit_judge_bias.experiments.run_quality_validation \
-        --config configs/experiment/quality_validation_pilot.yaml --use-api
+        --config configs/experiment/quality_validation_full_v2.yaml --use-api
 """
 
 from __future__ import annotations

@@ -7,16 +7,17 @@
 # ARM ⑤: quality-preservation validation over the full-version biased images.
 #
 # The whole research question is conditional on this: a bias effect only counts if
-# the bias provably did not change instruction adherence, editing quality or
-# detail preservation. The validator is a separate MLLM call with its own prompt
-# and never participates in the main scoring/pairwise grid.
+# the cue did not change instruction adherence, editing quality or detail
+# preservation. This arm supplies per-cue evidence for that on a seeded sample of
+# 110 images; it does not certify every image. The validator is a separate MLLM
+# call with its own prompt and never participates in the main scoring/pairwise grid.
 #
 # 11 biases x 110 = 1,210 calls. The C-class injectors (region_annotation,
 # zoom_inset, detail_caption, distraction) touch the edit region itself, so they
 # carry the highest risk of a real quality change and deserve the same per-bias
 # sample as the B-class ones rather than a token few.
 #
-# `sham` is in here as the validator's OWN positive control: a validator that does
+# `sham` is in here as the validator's OWN null control: a validator that does
 # not pass a visually null re-encode (SSIM 0.9995) at ~100% is miscalibrated, and
 # its verdicts on the ten real biases cannot be trusted either.
 #

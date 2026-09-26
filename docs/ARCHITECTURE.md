@@ -61,7 +61,10 @@ The headline table is `invariance_noise_floor.csv` (`build_noise_floor_table`). 
 is 10 × the mean absolute per-item change in one rating. Each judge has two floors per
 rating, the `sham` change and the retest change, each taken as the 20th percentile of 2000
 bootstrap means. A cell is marked by how many floors its 95% bootstrap lower bound
-exceeds.
+exceeds (a descriptive rule, not a test). The same table's agreement markers come from
+`agreement_by_dimension.csv` (`build_agreement_by_dimension`): per rating, the change in
+Spearman ρ against the matching EBench-18K human label, marked when its 95% turn-cluster
+interval excludes zero (uncorrected; BH columns beside it).
 
 ## Result trees
 
@@ -114,7 +117,7 @@ Code comments and some config names refer to experiment arms by short labels:
 | Label | Meaning |
 |---|---|
 | claim A | invariance: does a cue shift the judge's score? (`claim_a*.csv`, `invariance_noise_floor.csv`) |
-| claim B | agreement: does a cue change the judge's agreement with human rankings? (`claim_b*.csv`) |
+| claim B | agreement: does a cue change the judge's agreement with human rankings? (`claim_b*.csv`, `agreement_by_dimension.csv`) |
 | A- / B- / C-class | prompt-level cues / global pixel cues / cues near the edit region |
 | breadth, anchor | the stratified cross-source block, and the block of samples with human ratings |
 | fill | the second collection that completed the anchor and one-sided pairwise grids (`results/v2_fill`) |

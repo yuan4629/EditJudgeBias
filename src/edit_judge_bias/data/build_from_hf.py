@@ -28,8 +28,8 @@ Three config switches carry the awkward cases:
   split is *derived from* MagicBrush dev, so the two manifests must be disjoint or
   "it generalizes across 3 sources" would be double-counting one source.
 
-    python -m edit_judge_bias.data.build_from_hf --config configs/data/humanedit.yaml --dry-run
-    python -m edit_judge_bias.data.build_from_hf --config configs/data/humanedit.yaml
+    python -m edit_judge_bias.data.build_from_hf --config configs/data/magicbrush_dev.yaml --dry-run
+    python -m edit_judge_bias.data.build_from_hf --config configs/data/magicbrush_dev.yaml
 """
 
 from __future__ import annotations

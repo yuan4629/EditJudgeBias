@@ -7,7 +7,7 @@ results/biased_judgments/ (§5.2). Mock-first: defaults to MockJudgeAdapter; rea
 API calls (M4) require a real adapter type and an explicit --use-api.
 
     python -m edit_judge_bias.experiments.run_scoring_judge \
-        --config configs/experiment/scoring_pilot_mock.yaml
+        --config configs/experiment/scoring_smoke_v2.yaml --judge-config configs/judge/mock.yaml
 """
 
 from __future__ import annotations

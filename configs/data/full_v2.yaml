@@ -26,11 +26,12 @@
 #   - EBench-18K passes all three overlap dimensions against all four others ONLY
 #     because its deblur/desnow/lowlight tasks are excluded in ebench18k.yaml —
 #     they share GoPro/CSD/LOL with I2EBench (measured 11/12, 4/12 dirty).
-#     Report: data/provenance/overlap_ebench18k.json
+#     Report: data/provenance/overlap_ebench18k.json (not shipped; regenerate with
+#     `python -m edit_judge_bias.data.overlap --new ... --against ... --out ...`).
 # So do not claim five-dataset generalisation. What the split buys: FOUR label
 # kinds over three content pools (3-dimension human MOS, absolute human SC/PQ,
 # real pairwise human votes, human ground-truth edited images) and four model
-# rosters. See tmp_data/imagenhub_meta/mb_dev_partition.json for the partition.
+# rosters.
 
 sources:
   - name: I2EBench
@@ -58,7 +59,7 @@ output:
   pairs: data/manifests/pairs_full_v2.jsonl
 
 judge_subset:
-  # Same seed as configs/data/i2ebench.yaml so I2EBench draws stay aligned with
+  # Same seed as configs/data/i2ebench_600.yaml so I2EBench draws stay aligned with
   # the pilot. Growing per_source_per_edit_type yields a strict superset of the
   # smaller draw, so biased images already injected and judge calls already paid
   # for remain valid -- never lower it and never change the seed.

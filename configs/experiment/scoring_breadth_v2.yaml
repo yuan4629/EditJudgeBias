@@ -1,5 +1,6 @@
 # ARM ①: the breadth block — claim A, "the judge is not invariant to a perturbation
-# that provably did not change editing quality".
+# designed not to change editing quality" (preservation is checked per cue on a
+# validator sample, not certified per image).
 #
 # 611 samples x 14 conditions = 8,554 calls per judge. Run it once per judge:
 #

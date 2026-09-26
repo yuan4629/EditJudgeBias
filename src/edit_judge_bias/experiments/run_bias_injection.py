@@ -8,7 +8,7 @@ Resumable: completed `biased_id`s are read back from the output manifest and
 skipped. Failures are logged (to a JSONL failure log) and do not abort the batch.
 
     python -m edit_judge_bias.experiments.run_bias_injection \
-        --config configs/experiment/bias_injection_pilot.yaml
+        --config configs/experiment/bias_injection_full_v2.yaml
     # preview the plan without writing images:
     python -m edit_judge_bias.experiments.run_bias_injection --config ... --dry-run
 """

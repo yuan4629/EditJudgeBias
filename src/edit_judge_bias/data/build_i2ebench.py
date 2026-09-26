@@ -7,11 +7,11 @@ Layout consumed:
     <editbench_root>/EditResult/<category>/<model>/<stem>.* # edited image (ext may differ)
 
 Mapping (category -> edit_type, type -> content_category, instruction field) is
-config-driven via configs/data/i2ebench.yaml. Edited images are matched by *stem*
+config-driven via configs/data/i2ebench_600.yaml. Edited images are matched by *stem*
 because some models re-encode to a different extension.
 
-    python -m edit_judge_bias.data.build_i2ebench --config configs/data/i2ebench.yaml
-    python -m edit_judge_bias.data.build_i2ebench --config configs/data/i2ebench.yaml --dry-run
+    python -m edit_judge_bias.data.build_i2ebench --config configs/data/i2ebench_600.yaml
+    python -m edit_judge_bias.data.build_i2ebench --config configs/data/i2ebench_600.yaml --dry-run
 """
 
 from __future__ import annotations

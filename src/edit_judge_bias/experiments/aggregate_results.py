@@ -183,7 +183,7 @@ CANDIDATE_JUDGES: Dict[str, str] = {
         "`bandwagon` -- one of claim A's two headline directions -- pinned at 30.00), and "
         "2.4% (2/84) of its calls returned a well-formed, successfully-parsed verdict whose "
         "reason was 'Edited image not provided.'  Those rows score the floor, enter "
-        "`mean_shift` at -27, and every pipeline check passes them.  See RESULTS.md 20."
+        "`mean_shift` at -27, and every pipeline check passes them."
     ),
 }
 

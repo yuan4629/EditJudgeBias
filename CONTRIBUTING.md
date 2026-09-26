@@ -48,6 +48,7 @@ Verify an unchanged benchmark with `python scripts/verify_benchmark.py all`.
 
 ## Data
 
-Do not add images, annotations, judge outputs or any other dataset content to the
-repository. Everything under `data/` except `data/provenance/`, and everything under
-`results/` and `tmp_data/`, is git-ignored on purpose.
+Do not add images, annotations, raw model responses, judge or validator outputs, logs, keys
+or any other dataset content to the repository. Everything under `data/` except
+`data/provenance/`, and everything under `results/` and `tmp_data/`, is git-ignored on
+purpose.

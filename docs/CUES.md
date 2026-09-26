@@ -1,10 +1,13 @@
 # Cue catalogue
 
-A **cue** is a change to the judge's input that should not change a correct verdict: it
-leaves what was edited, and how well, intact. Each image cue is a deterministic injector in
-`src/edit_judge_bias/bias/`, parameterised by `configs/bias/<cue>.yaml`, and writes a new
-image. Originals and edited images are never modified. Prompt cues change only the text
-around the images.
+A **cue** is a change to the judge's input that should not change a correct verdict: it is
+designed to leave what was edited, and how well, intact. For image cues this is checked per
+cue on a sample of rendered images, not certified for every image (see stage 3 in
+[REPRODUCTION.md](REPRODUCTION.md#3-preservation-validation-paid)).
+
+Each image cue is a deterministic injector in `src/edit_judge_bias/bias/`, parameterised by
+`configs/bias/<cue>.yaml`, and writes a new image. Originals and edited images are never
+modified. Prompt cues change only the text around the images.
 
 Sizes scale with the image's short edge, so a cue is equally prominent at 512 px and 1024
 px. The C-class cues use an estimate of the edit region, taken from the original-vs-edited
@@ -51,7 +54,7 @@ anonymous version, and a literal name.
 | Condition | Purpose |
 |---|---|
 | `sham` | a JPEG round trip at quality 95: the same picture as a new file, run through the same pipeline. Its effect is the zero-dose floor every cue is read against. It is also the validators' calibration: a validator that flags `sham` is miscalibrated. `sham` is a zero-dose control, not a dose-matched one. |
-| `edit_damage_{25,50,100}` | reverts that fraction of the edit region to the original pixels, so the instruction was provably not carried out there. It is the validators' positive control (sensitivity) and is never shown to judges. |
+| `edit_damage_{25,50,100}` | reverts that fraction of the estimated edit region to the original pixels, so by construction the instruction is not carried out there. It is the validators' positive control (sensitivity) and is never shown to judges. |
 | `edit_damage_blur` | blurs the edit region: the edit stays, its detail is destroyed. It is a second positive control. |
 
 ## Where each cue is used

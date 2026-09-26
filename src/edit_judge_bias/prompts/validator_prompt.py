@@ -64,7 +64,7 @@ Return only valid JSON:
 #
 # ⚠️ DESIGN RULE: everything except the cosmetic-example list is byte-identical to the
 # published template.  If any other wording moved, a difference in pass rates would no
-# longer be attributable to the asymmetry being tested.  `tests/test_validator_prompt.py`
+# longer be attributable to the asymmetry being tested.  `tests/test_validator_prompt_ablation.py`
 # asserts that the two templates differ in exactly the intended places.
 _C_CLASS_EXAMPLES = (
     "a box or arrow drawn over the edited region, a magnified inset of the edited "

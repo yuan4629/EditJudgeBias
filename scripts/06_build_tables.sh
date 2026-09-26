@@ -40,6 +40,13 @@ echo ">> main invariance table: per-dimension |change| against the sham and rete
 python -m edit_judge_bias.experiments.build_noise_floor_table \
   --results-dir "$R" --samples "$S" "${BREADTH[@]}"
 
+echo ">> the same table's agreement markers: per-dimension delta-rho on EBench-18K"
+# Main-grid cues against the un-cued baseline, fill cues against the fill's own sham.
+# `marker` is the published rule (95% turn-cluster interval excludes zero, UNCORRECTED);
+# the BH columns beside it are supplementary. No subset filter: it reads the anchor block.
+python -m edit_judge_bias.experiments.build_agreement_by_dimension \
+  --results-dir "$R" --samples "$S" --fill-dir "$FILL"
+
 echo ">> sensitivity analyses (read the tables above)"
 # The exclusion analysis reads the mask-polarity audit; rebuild it if absent.
 [ -f "$R/metrics/mask_polarity_audit.json" ] || python scripts/audit_mask_polarity.py

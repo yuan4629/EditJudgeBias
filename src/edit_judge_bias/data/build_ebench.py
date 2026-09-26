@@ -12,8 +12,9 @@ Layout consumed:
 
 The label files are JSON arrays of `{query, response, images}` — the instruction is
 embedded in the `query` prose and the MOS in the `response` prose, so both are
-extracted by pattern. `images` carries the *authors'* absolute paths
-(`/mnt/data/xzt/MM/editing_all/...`), which is why only the tail is used to join.
+extracted by pattern. `images` carries absolute paths from the dataset authors' own
+machine (an arbitrary prefix, then `.../editing_all/...`), which is why only the tail is
+used to join.
 
 The source's own task index is authoritative for `edit_type`; the text rules are
 deliberately NOT used here (measured: they mislabel `color` 80% of the time on

@@ -2,10 +2,10 @@
 
 ★ WHY THIS EXISTS, AND WHY IT IS THE ONE INJECTOR THAT MUST NOT PRESERVE QUALITY.
 
-Every other injector in this package is quality-preserving by construction, and the
-whole study is conditional on that: a score shift only counts if the perturbation
-provably did not change how well the edit was done. The instrument that certifies it is
-the MLLM validator, and the only thing measured about that instrument so far is its
+Every other injector in this package is designed to preserve quality, and the whole
+study is conditional on that: a score shift only counts if the perturbation did not
+change how well the edit was done. The evidence for it is the MLLM validator, run on a
+seeded sample of each cue's images (it certifies no individual image), and the only thing measured about that instrument so far is its
 SPECIFICITY — its pass rate on `sham`, a visually null re-encode, which is its false-flag
 floor (gemini 0.982, gpt-4o-mini 0.991, glm-4v 0.864).
 

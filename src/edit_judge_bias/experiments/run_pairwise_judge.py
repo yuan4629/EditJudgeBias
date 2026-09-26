@@ -7,7 +7,7 @@ display order (the 6th MVP bias — a judge-protocol bias, no image change, §4.
 those results carry bias_type="position" and land in results/biased_judgments/.
 
     python -m edit_judge_bias.experiments.run_pairwise_judge \
-        --config configs/experiment/pairwise_pilot_mock.yaml
+        --config configs/experiment/pairwise_v2.yaml --judge-config configs/judge/mock.yaml
 """
 
 from __future__ import annotations

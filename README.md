@@ -5,23 +5,28 @@ editing**.
 
 MLLM judges are used to score and rank image editors. EditJudgeBias asks whether their
 verdicts can be moved by cues that have nothing to do with editing quality. It takes real
-`(original image, instruction, edited image)` triples and injects one quality-preserving cue
-into the edited image or into the judge prompt. It then measures whether the judge's score
-or pairwise preference moves when it should not.
+`(original image, instruction, edited image)` triples and injects one cue, designed to leave
+editing quality unchanged, into the edited image or into the judge prompt. It then measures
+whether the judge's score or pairwise preference moves when it should not.
 
-A cue is analyzed only with supporting quality-preservation evidence.
-Image-side cues are assessed using separate MLLM validators, sham and
-edit-damage controls, and human checks, independently of judge evaluation.
-These checks provide cue-level preservation evidence rather than certifying
-every individual image.
+Quality preservation is supported by sampled, cue-level evidence. It is not certified image
+by image. For each image-side cue, separate MLLM validators check a seeded sample of 110
+rendered images; they never take part in the judge evaluation. Each cue's pass rate is read
+against a `sham` floor on the same base images and against edit-damage positive controls,
+which measure how often the validators catch a damaged edit. Human labels spot-check a
+subset of cue images. Most judged cue images were never validated individually. `position`
+and the two prompt cues leave the images untouched.
 
 This repository contains the code to build the benchmark, run judges on it, and analyse
-the results. **It contains no data**: most images come from public editing benchmarks you
-download from their owners. Exact reconstruction of the I2EBench component also needs two
-author-generated editor outputs that are not in the public I2EBench release (see
-[docs/DATASETS.md](docs/DATASETS.md)). Published
+the results. **It contains no data**: no images (original, edited or rendered cue images),
+no human labels, no raw model responses, no judge or validator verdicts, no logs and no API
+credentials. The images come from public editing benchmarks you download from their owners
+(see [docs/DATASETS.md](docs/DATASETS.md)), with one exception: exact reconstruction of the
+I2EBench component also needs the outputs of two editors (`fluxkontext`, `qwen_image_edit`)
+that we generated ourselves and that are not part of the public I2EBench release. Published
 fingerprints let you check that your rebuild matches ours ([Reproducing the
-benchmark](#reproducing-the-benchmark)).
+benchmark](#reproducing-the-benchmark)). The inputs that a rebuild cannot recover are listed
+in [docs/REPRODUCTION.md](docs/REPRODUCTION.md#inputs-outside-this-repository).
 
 ## What is measured
 
@@ -38,13 +43,16 @@ Thirteen conditions plus a placebo, grouped by where the cue enters the judge's 
 
 The audit reports three complementary dimensions:
 
-- **Invariance:** how much do quality-preserving cues change the judge's ratings?
+- **Invariance:** how much do the cues change the judge's ratings?
 - **Agreement:** how do those cues change agreement with human judgments?
 - **Stability:** are pairwise preferences preserved under A/B display-order swaps?
 
 The main invariance table (`invariance_noise_floor.csv`, stage 6) reads each judge's
 per-dimension rating change against two noise floors of that judge's own: the `sham`
-control and a re-query of 200 identical un-cued inputs.
+control and a re-query of 200 identical un-cued inputs. Its agreement markers
+(`agreement_by_dimension.csv`) give the per-dimension change in rank agreement with human
+ratings on EBench-18K; they are uncorrected per-cell intervals (see
+[Reading the statistics](docs/REPRODUCTION.md#reading-the-statistics)).
 
 Judges are evaluated in two protocols: single-image **scoring** (three dimensions on a 1–10
 scale) and **pairwise** preference.
@@ -74,7 +82,7 @@ configs/               YAML that drives every step (no behaviour is hard-coded)
   bias/                one file per cue (injector parameters)
   judge/               one file per judge / validator (model id, decoding settings)
   experiment/          one file per arm (which manifest, which cues, where results go)
-data/provenance/       tracked provenance metadata: benchmark fingerprints, dataset locks
+data/provenance/       tracked provenance metadata: the benchmark fingerprints
 scripts/               the pipeline in stage order, plus helpers (see scripts/README.md)
 src/edit_judge_bias/   the package
   data/                record schemas, JSONL I/O, per-source builders, manifest checks

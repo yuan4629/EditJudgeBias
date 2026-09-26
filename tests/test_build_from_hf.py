@@ -431,9 +431,7 @@ def test_missing_column_raises_instead_of_silently_dropping(tmp_path: Path, monk
     not (REPO_ROOT / "tmp_data" / "imagenhub_meta" / "dataset_lookup.csv").exists(),
     reason="needs ImagenHub's released metadata (tmp_data/imagenhub_meta/"
            "dataset_lookup.csv). Third-party corpus metadata is not redistributed with "
-           "this archive -- see NOTICE.md for the licence boundary; fetch it from the "
-           "ImagenHub release. This project's own derived partition proof "
-           "(mb_dev_partition.json) IS shipped.",
+           "this repository; fetch it from the ImagenHub release (see docs/DATASETS.md).",
 )
 def test_real_magicbrush_config_parses_and_excludes_179(tmp_path: Path):
     """The shipped config's exclusion list is on disk and parses to 179 keys."""

@@ -289,7 +289,7 @@ def measure_spec_violations(
         "canvas_only_false_alarms": sorted(canvas_hits - {r["sample_id"] for r in viol}),
         "canvas_geometry_note": (
             "the assets are drawn on a transparent RGBA square, so the canvas can "
-            "overlap a region no drawn pixel touches; docs/PAID_ARMS_PLAN.md §1.2 "
+            "overlap a region no drawn pixel touches; an earlier design note "
             "counted canvases and reported 22, the measured count is 21"
         ),
         "reconstruction_control": {
