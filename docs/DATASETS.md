@@ -82,20 +82,23 @@ The builders write the images they fetch (ImagenHub, GenAI-Bench, MagicBrush) un
   the I2EBench inputs that we generated ourselves; they are not part of the public release,
   and no public dataset contains them. The builder uses every editor folder it finds under
   `EditResult/<Category>/`, so without these two:
-  - `samples_i2e600.jsonl` has 480 rows instead of 600;
-  - the I2EBench strata of the judged subset and of the pairs are drawn from a different
-    candidate list, so they differ, and so do the cue images rendered from them;
-  - the validators' seeded 110-image draws share one generator across cues, so they change
-    for every cue.
+  - `samples_i2e600.jsonl` has 480 rows instead of 600 (the same 60 image–instruction
+    groups, eight editors each);
+  - the I2EBench strata of the judged subset and of the judged pairs are drawn from a
+    different candidate list, so they differ (106 of the 160 samples and 150 of the 168
+    pairs), and so do the cue images rendered from them;
+  - each cue's seeded 110-image validator draw keeps its images from the other sources and
+    replaces its I2EBench ones (8 to 17 images per cue).
 
-  Strata of the other sources have their own seeds and are unaffected.
+  The judged subset keeps its size (1,196 samples, 616 pairs), and the strata of the other
+  sources have their own seeds and are unaffected.
   `verify_benchmark.py sources` reports the missing groups as `I2EBench/fluxkontext` and
   `I2EBench/qwen_image_edit`.
 - **Known issue — instruction variant.** Upstream, `EditResult/` holds edits made from each
   item's *diverse* instruction (`div_exp`), and `EditResult_ori/` holds edits made from the
   *original* instruction (`ori_exp`). The benchmark reads images from `EditResult/` but
   pairs them with `ori_exp` (`instruction_field` in the config). Where the two phrasings ask
-  for different edits, the judged instruction does not match the image. Within-sample cue
+  for different edits, the judged instruction does not match the upstream editors' image. Within-sample cue
   effects compare the same image and instruction with and without a cue, so the mismatch is
   shared by both arms. It does, however, shift the baseline scores of the affected I2EBench
   items. I2EBench is not a human-anchor source.

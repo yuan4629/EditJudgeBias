@@ -21,11 +21,10 @@ Reference arm, by collection (the design ``claim_b.csv`` already uses):
     ``results/v2``): the cued answer against the un-cued answer to the same item.
 ``sham (same collection)``
     the eight FILL v2 anchor cues (``results/v2_fill``): the cued answer against the fill's
-    own ``sham`` on the same item. The fill re-asked no un-cued baseline, and the relay
-    drifted between the collections on two judges (``fill_collection_drift.csv``). The
+    own ``sham`` on the same item. The fill re-asked no un-cued baseline, and two judges'
+    answers drifted between the collections (``fill_collection_drift.csv``). The
     same-collection ``sham`` cancels that between-collection drift; it does not cancel
-    drift or relay-channel changes within the fill run, and ``sham`` is a zero-dose control,
-    not a dose-matched one.
+    drift within the fill run, and ``sham`` is a zero-dose control, not a dose-matched one.
 
     delta_rho = rho_S(cued rating, human label) - rho_S(reference rating, human label)
 

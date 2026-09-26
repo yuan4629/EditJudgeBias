@@ -18,10 +18,9 @@ WHY EVERY CELL HERE IS MEASURED AGAINST THE FILL'S OWN `sham`, NOT THE JULY BASE
 The fill re-asked no unbiased baseline, and the judges' answers are not stationary across
 the collections: on the same anchors and byte-identical requests, the September `sham`
 sits well above the July baseline for gemini-3.5-flash and gpt-5.5 while the other judges
-do not move (`fill_collection_drift.csv` carries the numbers).  Whether the relay's
-routing or the upstream model changed cannot be told apart from the local records; both
-the time and the serving channel differ between the collections.  A cue-vs-July contrast would book
-that drift as a cue effect on two judges.  The September `sham` was asked in the same
+do not move (`fill_collection_drift.csv` carries the numbers).  The local records cannot
+tell what changed between the collections.  A cue-vs-July contrast would book that drift
+as a cue effect on two judges.  The September `sham` was asked in the same
 run, on the same items, with the same dressed side on every pair (measured 616/616), so
 a cue-vs-sham contrast cancels the between-collection drift by design.  It is the
 estimator `claim_a.csv` already reports as `shift_vs_placebo`, applied to EVERY judge
@@ -31,10 +30,6 @@ effect.
 WHAT IT DOES NOT CANCEL -- the caveats `READING` repeats for these rows:
   * drift WITHIN the fill run (conditions were asked in priority order over ~6 h; a
     judge's cue blocks were asked from about 0.5 h before to 5 h after its `sham` block);
-  * relay channel changes WITHIN the fill run (per the relay's usage ledger, most of
-    gemini-3.5-flash's cue blocks, and gpt-5.5's scoring `aesthetic_filter` and both
-    `model_name` blocks, were served by a different upstream channel than the matching
-    `sham`; the other judges' fill cells share their `sham`'s channel);
   * `sham` is a JPEG q95 round-trip saved as PNG: a zero-DOSE control, not a
     dose-matched one, exactly as in claim A.
 

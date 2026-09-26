@@ -48,9 +48,11 @@ python -m edit_judge_bias.experiments.build_agreement_by_dimension \
   --results-dir "$R" --samples "$S" --fill-dir "$FILL"
 
 echo ">> sensitivity analyses (read the tables above)"
-# The exclusion analysis reads the mask-polarity audit; rebuild it if absent.
+# The exclusion analysis reads the mask-polarity audit; rebuild it if absent. It also reads
+# the frozen pre-fix sticker measurement, which the current images can no longer give.
 [ -f "$R/metrics/mask_polarity_audit.json" ] || python scripts/audit_mask_polarity.py
-python -m edit_judge_bias.experiments.build_sensitivity_tables --results-dir "$R" --samples "$S"
+python -m edit_judge_bias.experiments.build_sensitivity_tables --results-dir "$R" --samples "$S" \
+  --violation-audit data/provenance/distraction_spec_violation_audit.json
 python -m edit_judge_bias.experiments.build_robustness_axes --metrics-dir "$R/metrics"
 python -m edit_judge_bias.experiments.build_claim_b_permutation --results-dir "$R" --samples "$S"
 python -m edit_judge_bias.experiments.build_leaderboard_simulation --results-dir "$R" --samples "$S"

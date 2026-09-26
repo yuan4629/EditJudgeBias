@@ -532,7 +532,7 @@ def compute_one_sided_bias(
 
     `baseline_bias` names the condition that plays the baseline. The default, `None`,
     is the unbiased verdict, as in the published grid. FILL v2 (2026-09-14) re-asked no
-    unbiased baseline two months later and the relay drifted in between, so its cells
+    unbiased baseline two months later and two judges drifted in between, so its cells
     pass `baseline_bias="sham"`: the same collection's zero-dose placebo, dressed on the
     same side of every pair (measured 616/616). That condition is never tabulated
     against itself.
