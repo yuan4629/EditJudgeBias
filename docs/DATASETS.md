@@ -1,9 +1,7 @@
 # Datasets
 
 EditJudgeBias ships **no images and no annotations**. It is built from five public
-image-editing benchmarks, plus one more for an exploratory fairness track that is not part
-of the reported experiments. You download each from its
-owner under that owner's license, and the builders in `src/edit_judge_bias/data/` turn them
+image-editing benchmarks. You download each from its owner under that owner's license, and the builders in `src/edit_judge_bias/data/` turn them
 into JSONL manifests.
 
 Most benchmark inputs are obtained from the five public source benchmarks.
@@ -33,7 +31,6 @@ python scripts/verify_benchmark.py upstream
 | GenAI-Bench (image editing) | breadth block | Hugging Face Hub (automatic) | see the dataset card |
 | MagicBrush (dev split) | breadth block | Hugging Face Hub (automatic) | see the dataset card |
 | EBench-18K (LMM4Edit) | breadth block, human-anchor block | manual download | **no license declared**, see below |
-| OmniEdit-Filtered-1.2M | exploratory fairness track only | Hugging Face Hub (manual shards) | see the dataset card |
 
 The breadth block is a stratified subset (source × edit type) used for the cross-source
 invariance analyses. The human-anchor block consists of samples with human quality ratings,
@@ -65,7 +62,6 @@ tmp_data/
   ebench_meta/                            EBench-18K labels
     train_v.json train_e.json train_c.json train_yn.json
     test_v.json  test_e.json  test_c.json  test_yn.json
-  downloads/                              OmniEdit shards (exploratory fairness track only)
 ```
 
 The builders write the images they fetch (ImagenHub, GenAI-Bench, MagicBrush) under
@@ -136,14 +132,6 @@ The builders write the images they fetch (ImagenHub, GenAI-Bench, MagicBrush) un
   using or redistributing it. The editors are anonymous (`model00`–`model16`), so no
   per-editor claim can be made from this source.
 - Config: `configs/data/ebench18k.yaml`.
-
-### OmniEdit-Filtered-1.2M (exploratory fairness track only)
-
-- Hugging Face `TIGER-Lab/OmniEdit-Filtered-1.2M`, split `train`. The fairness pool uses a
-  fixed set of 15 shards. Their file names, sha256 and row counts are frozen in
-  `data/provenance/omniedit_shard_lock.json`. Place those shards in `tmp_data/downloads/`.
-- **Do not add shards.** The pool is a seeded shuffle of the candidate set, so any extra
-  shard changes which scenes are drawn.
 
 ## Inputs that cannot be rebuilt from these datasets
 

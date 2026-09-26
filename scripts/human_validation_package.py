@@ -120,8 +120,8 @@ def _load(path) -> Image.Image:
 def _composite(edited: Image.Image, biased: Image.Image, instruction: str) -> Image.Image:
     """Side by side at a COMMON scale, letterboxed — never stretched.
 
-    The D-S gate learned this the expensive way: squashing 768x1344 frames into a square
-    thumbnail made an honest human answer impossible. Both members here are two versions
+    Squashing 768x1344 frames into a square thumbnail makes an honest human answer
+    impossible. Both members here are two versions
     of one edit, so any difference in apparent scale between the halves is an artefact of
     the renderer that the annotator would have to attribute to the cue. One scale factor,
     white padding for the shorter member.

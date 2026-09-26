@@ -139,7 +139,7 @@ def test_the_control_never_enters_a_judge_arm_or_the_published_manifest():
     #     happen is such a config writing into the published result tree, where
     #     `build_quality_combined` globs `validation__*.jsonl` and would read the control
     #     as an eleventh cue.  So the invariant is about the DESTINATION, not the name.
-    published_roots = ("results/v2/", "results\\v2\\", "results/v2_fairness")
+    published_roots = ("results/v2/", "results\\v2\\")
     named_control = False
     for cfg in configs:
         text = cfg.read_text(encoding="utf-8")

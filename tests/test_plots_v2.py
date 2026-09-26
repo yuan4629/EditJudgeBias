@@ -1,30 +1,23 @@
 """Tests for the paper figure set.
 
-These pin four things that are invisible in a rendered PNG but would each ship a
+These pin three things that are invisible in a rendered PNG but would each ship a
 wrong claim:
 
 1. the pilot tree can never write a v2 basename (mock-judge data reaching a paper);
 2. the claim-A forest reads ``claim_a.csv``, not ``scoring_shift.csv`` (a table with
    no CI, no BH q and no placebo bound cannot support the figure's encoding);
 3. ``sham`` is drawn below a rule in its own strip (its empty q is by design, and in
-   the main strip it would read as "not significant");
-4. the D-S builder refuses to put two BH families on one axis.
+   the main strip it would read as "not significant").
 """
 
 from __future__ import annotations
 
-import copy
 import csv
 from pathlib import Path
 
 import pytest
 
 from edit_judge_bias.experiments.plot_results import figure_prefix, make_figures
-from edit_judge_bias.visualization.plot_fairness_ds import (
-    check_one_family_per_panel,
-    family_group,
-    plot_ds_null_vs_control,
-)
 from edit_judge_bias.visualization.plot_forests import (
     claim_a_layout,
     plot_claim_a_dimension_forest,
@@ -57,31 +50,6 @@ def _claim_a_rows():
     return rows
 
 
-def _ds_rows():
-    rows = []
-    for judge in JUDGES:
-        rows.append(dict(judge_model=judge, attribute="skin_tone", n=740,
-                         mean_gap=0.05, ci_low=-0.07, ci_high=0.17, q_value="0.34",
-                         significant_bh="False", mde_sd="0.1025",
-                         family="fairness_gap:skin_tone"))
-        rows.append(dict(judge_model=judge, attribute="dose_control", n=480,
-                         mean_gap=0.70, ci_low=0.48, ci_high=0.94, q_value="0.0",
-                         significant_bh="True", mde_sd="0.1272",
-                         family="fairness_gap:dose_control"))
-        for arm, sign in (("dark", -1), ("light", -1)):
-            rows.append(dict(
-                judge_model=judge, attribute=f"dose_vs_placebo:{arm}", n=480,
-                mean_gap=sign * 0.26, ci_low=sign * 0.44, ci_high=sign * 0.09,
-                q_value="0.001", significant_bh="True", mde_sd="0.1272",
-                family=f"fairness_contrast:dose_vs_placebo:{arm}"))
-            rows.append(dict(
-                judge_model=judge, attribute=f"nonskin_vs_skin:{arm}", n=480,
-                mean_gap=0.50, ci_low=0.30, ci_high=0.72, q_value="0.0",
-                significant_bh="True", mde_sd="0.1272",
-                family=f"fairness_contrast:nonskin_vs_skin:{arm}"))
-    return rows
-
-
 def _write_csv(path: Path, rows):
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as fh:
@@ -96,7 +64,6 @@ def _write_csv(path: Path, rows):
 def test_pilot_tree_gets_a_prefix_and_v2_trees_do_not(tmp_path: Path):
     assert figure_prefix(tmp_path / "results" / "metrics") == "pilot_"
     assert figure_prefix(tmp_path / "results" / "v2" / "metrics") == ""
-    assert figure_prefix(tmp_path / "results" / "v2_fairness_ds" / "metrics") == ""
 
 
 def test_pilot_figures_cannot_collide_with_v2_basenames(tmp_path: Path):
@@ -110,9 +77,9 @@ def test_pilot_figures_cannot_collide_with_v2_basenames(tmp_path: Path):
     _write_csv(tmp_path / "results" / "v2" / "metrics" / "scoring_shift.csv", shared)
 
     pilot = make_figures(tmp_path / "results" / "metrics",
-                         tmp_path / "results" / "figures", root=tmp_path)
+                         tmp_path / "results" / "figures")
     v2 = make_figures(tmp_path / "results" / "v2" / "metrics",
-                      tmp_path / "results" / "v2" / "figures", root=tmp_path)
+                      tmp_path / "results" / "v2" / "figures")
 
     assert pilot and v2
     assert all(p.name.startswith("pilot_") for p in pilot)
@@ -133,13 +100,13 @@ def test_claim_a_forest_needs_claim_a_csv_not_scoring_shift(tmp_path: Path):
                [dict(judge_model=j, bias_type="padding", mean_shift=-0.4, sir=0.3)
                 for j in JUDGES])
 
-    made = {p.name for p in make_figures(metrics, figures, root=tmp_path)}
+    made = {p.name for p in make_figures(metrics, figures)}
     assert "claim_a_forest.png" not in made, (
         "scoring_shift.csv alone must not produce the claim A forest"
     )
 
     _write_csv(metrics / "claim_a.csv", _claim_a_rows())
-    made = {p.name for p in make_figures(metrics, figures, root=tmp_path)}
+    made = {p.name for p in make_figures(metrics, figures)}
     assert "claim_a_forest.png" in made
 
 
@@ -187,53 +154,6 @@ def test_claim_a_forest_refuses_a_control_only_table():
     _, control = split_control_rows(_claim_a_rows())
     with pytest.raises(ValueError, match="no non-control rows"):
         claim_a_layout(control)
-
-
-# --------------------------------------------------------------------------- #
-# 4. F1 must not pool BH families
-# --------------------------------------------------------------------------- #
-def test_family_group_strips_only_the_arm_suffix():
-    assert family_group("fairness_contrast:dose_vs_placebo:dark") == \
-        "fairness_contrast:dose_vs_placebo"
-    assert family_group("fairness_gap:skin_tone") == "fairness_gap:skin_tone"
-
-
-def test_one_panel_may_hold_the_two_arms_of_one_contrast():
-    rows = [dict(family="fairness_contrast:dose_vs_placebo:dark"),
-            dict(family="fairness_contrast:dose_vs_placebo:light")]
-    assert check_one_family_per_panel(rows) == "fairness_contrast:dose_vs_placebo"
-
-
-def test_one_panel_may_not_hold_two_contrasts():
-    rows = [dict(family="fairness_gap:skin_tone"),
-            dict(family="fairness_gap:dose_control")]
-    with pytest.raises(ValueError, match="refusing to pool two BH families"):
-        check_one_family_per_panel(rows, "A")
-
-
-def test_ds_figure_raises_when_a_panel_would_pool_two_families(tmp_path: Path):
-    """The null and its control are two measurements. Sharing one ruler under one
-    apparent correction is the specific misreading this figure exists to prevent."""
-    rows = copy.deepcopy(_ds_rows())
-    for r in rows:
-        if r["attribute"] == "skin_tone":
-            r["family"] = "fairness_gap:dose_control"  # smuggle a second family in
-            break
-    with pytest.raises(ValueError, match="refusing to pool two BH families"):
-        plot_ds_null_vs_control(rows, tmp_path / "f1.png")
-
-
-def test_ds_figure_renders_the_four_panels(tmp_path: Path):
-    out = plot_ds_null_vs_control(_ds_rows(), tmp_path / "f1.png")
-    assert out.exists() and out.stat().st_size > 0
-
-
-def test_ds_figure_runs_without_the_mde_reference(tmp_path: Path):
-    """SD(paired difference) comes from the raw judgments, which a fresh checkout may
-    not have. The MDE ticks are then simply not drawn — never drawn against
-    SD(score), which would put the threshold ~3.5x too far out."""
-    out = plot_ds_null_vs_control(_ds_rows(), tmp_path / "f1b.png", paired_sd={})
-    assert out.exists()
 
 
 # --------------------------------------------------------------------------- #
@@ -407,9 +327,9 @@ def test_the_dimension_figure_is_rendered_from_its_own_frozen_table(tmp_path: Pa
     metrics = tmp_path / "results" / "v2" / "metrics"
     figures = tmp_path / "results" / "v2" / "figures"
     _write_csv(metrics / "claim_a.csv", _claim_a_rows())
-    made = {p.name for p in make_figures(metrics, figures, root=tmp_path)}
+    made = {p.name for p in make_figures(metrics, figures)}
     assert "claim_a_dimension_forest.png" not in made
 
     _write_csv(metrics / "claim_a_by_dimension.csv", _dimension_rows())
-    made = {p.name for p in make_figures(metrics, figures, root=tmp_path)}
+    made = {p.name for p in make_figures(metrics, figures)}
     assert "claim_a_dimension_forest.png" in made

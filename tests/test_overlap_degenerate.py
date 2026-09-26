@@ -140,8 +140,3 @@ def test_the_screen_is_off_by_default_so_published_pools_reproduce():
 
     sig = inspect.signature(overlap.ransac_inliers)
     assert sig.parameters["screen_degenerate"].default is False
-    from edit_judge_bias.experiments import build_fairness_pool as BFP
-
-    assert inspect.signature(BFP.build).parameters["orb_screen_degenerate"].default is False
-    assert inspect.signature(
-        BFP.collapse_duplicates).parameters["screen_degenerate"].default is False

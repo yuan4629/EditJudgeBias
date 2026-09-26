@@ -1,13 +1,9 @@
 """Render figures from the metric CSVs (Milestone 5 + the paper figure set).
 
 Reads whatever tables are present, so it works on the pilot archive (score shift +
-position only), on the v2 grid (which also has the frozen claim tables), and on the
-D-S fairness tree.
+position only) and on the v2 grid (which also has the frozen claim tables).
 
     python -m edit_judge_bias.experiments.plot_results --metrics-dir results/v2/metrics
-    python -m edit_judge_bias.experiments.plot_results \
-        --metrics-dir results/v2_fairness_ds/metrics \
-        --figures-dir results/v2_fairness_ds/figures
 
 **The pilot prefix is a safety rule, not cosmetics.** The pilot archive under
 ``results/metrics`` is 1-5-scale data that includes ``mock-judge`` and the dead
@@ -29,12 +25,10 @@ from typing import List
 from edit_judge_bias.data.manifest_utils import default_root
 from edit_judge_bias.experiments.build_claim_tables import main_grid_rows
 from edit_judge_bias.visualization import (
-    paired_diff_sd,
     plot_bias_effect,
     plot_claim_a_dimension_forest,
     plot_claim_a_forest,
     plot_claim_b_forest,
-    plot_ds_null_vs_control,
     plot_metric_heatmap,
     plot_mitigation_tradeoff,
     plot_position_joint,
@@ -55,14 +49,13 @@ def figure_prefix(metrics_dir: Path) -> str:
     """``"pilot_"`` for the 1-5 pilot archive, ``""`` for any v2-era tree.
 
     The pilot tree is ``<root>/results/metrics``; every later tree is one level deeper
-    (``results/v2/metrics``, ``results/v2_fairness_ds/metrics``). So the parent
+    (``results/v2/metrics``). So the parent
     directory's name is the discriminator, and it needs no config to stay right.
     """
     return "pilot_" if Path(metrics_dir).resolve().parent.name == "results" else ""
 
 
-def make_figures(metrics_dir: Path, figures_dir: Path, *,
-                 root: Path | None = None) -> List[Path]:
+def make_figures(metrics_dir: Path, figures_dir: Path) -> List[Path]:
     metrics_dir, figures_dir = Path(metrics_dir), Path(figures_dir)
     figures_dir.mkdir(parents=True, exist_ok=True)
     made: List[Path] = []
@@ -143,22 +136,6 @@ def make_figures(metrics_dir: Path, figures_dir: Path, *,
     if quality and any(r.get("validator_model") for r in quality):
         made.append(plot_quality_vs_floor(quality, out("quality_vs_floor.png")))
 
-    # F1. The D-S fairness arm — its own tree, its own tables.
-    gaps = _read_csv(metrics_dir / "attribute_gaps.csv")
-    deco = _read_csv(metrics_dir / "dose_control_decomposition.csv")
-    if gaps:
-        sd = {}
-        base = root or Path(metrics_dir).resolve().parent.parent.parent
-        try:
-            sd = paired_diff_sd(
-                base / "data" / "manifests" / "samples_fairness_ds_judge_v4.jsonl",
-                Path(metrics_dir).parent / "raw_judgments",
-            )
-        except Exception as exc:  # pragma: no cover - the MDE ticks are optional
-            print(f"note: MDE reference skipped ({exc})")
-        made.append(plot_ds_null_vs_control(
-            list(gaps) + list(deco), out("ds_null_vs_control.png"), paired_sd=sd))
-
     return made
 
 
@@ -168,7 +145,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--metrics-dir", type=Path, default=root / "results" / "v2" / "metrics")
     ap.add_argument("--figures-dir", type=Path, default=root / "results" / "v2" / "figures")
     args = ap.parse_args(argv)
-    made = make_figures(args.metrics_dir, args.figures_dir, root=root)
+    made = make_figures(args.metrics_dir, args.figures_dir)
     for p in made:
         print(f"wrote {p}")
     if not made:

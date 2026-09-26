@@ -2,9 +2,7 @@
 
 The load-bearing one is `test_a_cue_at_the_ceiling_is_uninformative_not_null`: two of the
 four cues sit at a published pass rate of 1.000 and cannot move up, so their `b=0` is
-arithmetic rather than evidence.  Reading it as a null would be the same error as the D-G
-arm's auditor A, which looked like a strict gate but was gating on an axis that almost
-never fails.
+arithmetic rather than evidence.  Reading it as a null would be reading a ceiling as a null.
 """
 
 from __future__ import annotations

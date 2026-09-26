@@ -78,7 +78,6 @@ results/
   v2_control/              validator edit-damage controls
   v2_ablation/             C-class validator template ablation
   v2_ablation_control/     the ablation template on the edit-damage controls
-  v2_fairness/, v2_fairness_ds/   exploratory fairness track (not in the paper)
   cache/                   request cache (safe to delete; re-runs then call the API again)
 ```
 
@@ -106,7 +105,6 @@ q-value changes when the fill is added.
 | `judges/` | `JudgeAdapter`, `MockJudgeAdapter`, the OpenAI-compatible adapter, the tolerant JSON parser |
 | `metrics/` | score shifts, pairwise flip rates, agreement with humans, preservation metrics, statistics (Wilcoxon, McNemar, Benjamini–Hochberg, bootstrap intervals) |
 | `experiments/` | runners (`run_*`), the fill orchestrator, and all table builders (`build_*`, `aggregate_results`) |
-| `fairness/` | exploratory fairness track: attribute injectors, person/skin regions, ITA skin-tone metric, image-edit client |
 | `visualization/` | figures |
 
 ## Glossary of arm labels
@@ -117,18 +115,17 @@ Code comments and some config names refer to experiment arms by short labels:
 |---|---|
 | claim A | invariance: does a cue shift the judge's score? (`claim_a*.csv`, `invariance_noise_floor.csv`) |
 | claim B | agreement: does a cue change the judge's agreement with human rankings? (`claim_b*.csv`) |
-| A- / B- / C- / D-class | prompt-level cues / global pixel cues / cues near the edit region / fairness attributes |
+| A- / B- / C-class | prompt-level cues / global pixel cues / cues near the edit region |
 | breadth, anchor | the stratified cross-source block, and the block of samples with human ratings |
 | fill | the second collection that completed the anchor and one-sided pairwise grids (`results/v2_fill`) |
 | FILL P4 | preservation validation of the fill's newly rendered pair images |
-| WP-A1 | sensitivity analyses (exclusion, permutation, leaderboard simulation, dilution algebra) |
+| WP-A1 | sensitivity analyses (exclusion, permutation, leaderboard simulation) |
 | WP-A2 | re-rendering of the C-class cues after the edit-region mask fix (the released code renders the fixed images directly) |
 | WP-A3 | the matched `sham` floor for the validators |
 | WP-A4a/b | edit-damage positive controls (validator sensitivity) |
 | WP-A4c/d | the C-class validator template ablation, and the same template on the edit-damage controls |
 | WP-A5 | the replication judge (`qwen3-vl-32b-instruct`, roster `a5`) |
 | WP-A6 | the second human preservation package and its second annotator (inter-annotator agreement) |
-| D-S, D-G | exploratory fairness track: deterministic skin-lightness counterfactuals, generative attribute edits |
 
 ## Section references in comments
 
@@ -147,6 +144,5 @@ repository. The design-plan sections cited most often are:
 | §9.2–§9.5 | experiments: single-cue effects, cue strength, edit-type and content breakdown, mitigation |
 | §13 | pilot decision thresholds |
 
-In the analysis builders, `§5.7` (validator floors and controls), `§6.5` (the fairness
-null) and correlation-related `§7.2` refer to section numbers of an earlier draft of the
-paper. The surrounding comment makes clear what is meant.
+In the analysis builders, `§5.7` (validator floors and controls) and correlation-related
+`§7.2` refer to section numbers of an earlier draft of the paper. The surrounding comment makes clear what is meant.

@@ -540,7 +540,7 @@ def build_mos_stratum_sensitivity(
         )
     from edit_judge_bias.data import io
     from edit_judge_bias.data.schema import SampleRecord
-    from edit_judge_bias.metrics.fairness_metrics import minimum_detectable_effect
+    from edit_judge_bias.metrics.stats import minimum_detectable_effect
 
     results_dir = Path(results_dir)
     samples = io.read_jsonl(Path(samples_path), SampleRecord)

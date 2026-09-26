@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import pytest
+
 from edit_judge_bias.metrics.stats import (
     benjamini_hochberg,
     bootstrap_ci,
     mcnemar_pvalue,
+    minimum_detectable_effect,
     wilcoxon_pvalue,
+    wilson_interval,
 )
 
 
@@ -77,3 +81,37 @@ def test_bh_empty():
 
 def test_bh_never_exceeds_one():
     assert all(q <= 1.0 for q in benjamini_hochberg([0.6, 0.7, 0.99]))
+
+
+@pytest.mark.parametrize(
+    "successes,n,lo,hi",
+    [
+        # Derived from the closed form independently of the implementation:
+        #   d = 1 + z^2/n ; centre = (p + z^2/2n)/d ; half = z*sqrt(p(1-p)/n + z^2/4n^2)/d
+        # with z = 1.959963985. (20,20) matching the textbook 0.8389 is the anchor.
+        (20, 20, 0.838875, 1.0),       # p=1.0 must NOT get a zero-width interval
+        (0, 20, 0.0, 0.161125),        # p=0.0 likewise
+        (8, 20, 0.218807, 0.613418),
+        (1, 31, 0.005717, 0.161941),
+        (17, 20, 0.639581, 0.947631),
+        (27, 41, 0.505498, 0.784412),
+    ],
+)
+def test_wilson_interval_values(successes, n, lo, hi):
+    got_lo, got_hi = wilson_interval(successes, n)
+    assert got_lo == pytest.approx(lo, abs=1e-5)
+    assert got_hi == pytest.approx(hi, abs=1e-5)
+
+
+def test_wilson_interval_contains_the_point_estimate_and_is_empty_at_n_zero():
+    for successes, n in [(3, 7), (8, 20), (30, 31)]:
+        lo, hi = wilson_interval(successes, n)
+        assert lo <= successes / n <= hi
+    assert wilson_interval(0, 0) == (None, None)
+
+
+def test_mde_scales_as_one_over_sqrt_n():
+    """One number, derived one way, so the write-up cannot quote two different MDEs."""
+    assert minimum_detectable_effect(611) == pytest.approx(0.113)
+    assert minimum_detectable_effect(41) == pytest.approx(0.436, abs=1e-3)
+    assert minimum_detectable_effect(0) is None

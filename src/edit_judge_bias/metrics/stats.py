@@ -132,3 +132,40 @@ def fisher_exact_pvalue(a: int, b: int, c: int, d: int) -> Optional[float]:
     from scipy.stats import fisher_exact
 
     return float(fisher_exact([[a, b], [c, d]], alternative="two-sided")[1])
+
+
+def wilson_interval(successes: int, n: int) -> Tuple[Optional[float], Optional[float]]:
+    """95% Wilson score interval, delegating to `visualization.style.wilson`.
+
+    The project keeps exactly one Wilson implementation (used by the RR/CR, coverage and
+    validator-pass-rate figures). It is imported lazily because `visualization.style`
+    pulls in matplotlib at import time, and a metrics module must stay importable
+    without a plotting stack.
+
+    Returns `(None, None)` for `n == 0` rather than NaN: an empty interval is "not
+    measured", and "not measured" never renders as a number.
+    """
+    if n <= 0:
+        return (None, None)
+    from edit_judge_bias.visualization.style import wilson  # lazy: matplotlib at import
+
+    lo, hi = wilson(successes, n)
+    return (round(float(lo), 6), round(float(hi), 6))
+
+
+def minimum_detectable_effect(
+    n: int, *, reference_n: int = 611, reference_mde: float = 0.113
+) -> Optional[float]:
+    """Scale the project's measured breadth MDE to a smaller paired n.
+
+    Exists so the write-up quotes one number derived one way. The dataset report
+    measured 0.113 SD at n=611 for the breadth block's paired test; MDE goes as 1/sqrt(n).
+
+    ⚠️ **UNITS: SD of the PAIRED DIFFERENCE**, at alpha=0.05 two-sided and 80% power — the
+    reference is exactly `(z_.975 + z_.80)/sqrt(n)` (0.1133 at n=611, matching the measured
+    0.113 to three decimals). A shift standardised by SD(score) is NOT comparable to this
+    number. Mixing the two denominators once already doubled a published ratio.
+    """
+    if n <= 0:
+        return None
+    return reference_mde * (reference_n / n) ** 0.5

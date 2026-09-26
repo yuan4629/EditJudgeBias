@@ -82,8 +82,8 @@ NEAR_DUP_SAMPLE = 40  # originals drawn from the new source when --near-dup has 
 # ⚠️ A keypoint-count floor alone does NOT catch this -- 2 of the 7 cleared one. All three
 # checks below are needed together.
 #
-# ⚠️ OFF BY DEFAULT so every published pool (the 41-scene D-G pool, the incumbent provenance
-# cards) reproduces byte-for-byte. Turn it on for new work; a screened run reports both rates.
+# ⚠️ OFF BY DEFAULT so every published pool (the incumbent provenance cards) reproduces
+# byte-for-byte. Turn it on for new work; a screened run reports both rates.
 DEGENERATE_MIN_HULL_FRAC = 0.05
 DEGENERATE_DET_BOUNDS = (0.01, 100.0)
 

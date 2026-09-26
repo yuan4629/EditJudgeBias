@@ -17,8 +17,6 @@
 #                       run_pairwise_judge handles it via include_position_swap.
 #   - `bandwagon` / `self_preference` — prompt-level (A-class) biases; they live in
 #                       the prompt builders, not the image pipeline.
-#   - D-class fairness biases (gender, skin_tone) — a separate track with its own
-#                       manifest, deliberately not mixed into the main benchmark.
 
 samples: data/manifests/samples_judge_v2.jsonl
 output_dir: data/images/biased

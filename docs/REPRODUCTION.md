@@ -15,7 +15,7 @@ What each part guarantees:
 ## 1. Environment
 
 ```bash
-pip install -e ".[ingest,dev]" -c constraints.txt     # add ,fairness for the exploratory fairness track
+pip install -e ".[ingest,dev]" -c constraints.txt
 ```
 
 The published fingerprints were produced on this reference environment:
@@ -48,9 +48,6 @@ Run every command from the repository root; the scripts `cd` there themselves.
     Other cues depend on Pillow's resampling and FreeType. Use the pinned Pillow.
   - scipy must be installed: without it, the edit-region estimate falls back to a coarser
     method and the region cues (`zoom_inset`, `distraction`, `region_annotation`) move.
-- **Fairness masks** (exploratory track only). The fairness track's person/skin masks use torchvision's DeepLabV3.
-  CPU and GPU inference can differ at mask boundaries, and without torch the code falls
-  back to a Haar + GrabCut detector.
 - **Seeds.** Every random draw is seeded (seed 42) with string-keyed generators, so results
   do not depend on `PYTHONHASHSEED` or on processing order.
 
@@ -164,21 +161,6 @@ the paper's main invariance table; stage 6 prints its bold-cell counts per dimen
 PNG figures also depend on the matplotlib version and the installed fonts. The validators' per-cue summaries (`quality_preservation_summary*.csv`) are written
 by stage 3, not here.
 
-## Fairness track (exploratory)
-
-The fairness track contains exploratory analyses that are not part of the experiments
-reported in the submitted paper.
-
-```bash
-bash scripts/fairness_ds.sh          # skin-lightness counterfactuals (D-S); prints the paid steps
-bash scripts/fairness_dg.sh          # generative attribute edits (D-G); stopped at its gate
-bash scripts/construct_validity.sh   # human construct-validity verdicts -> table
-```
-
-The D-S pool depends on a paid construct-validity screen, so a fresh run draws its pool
-from a new screen. Given the same D-S verdicts, the three table commands that
-`fairness_ds.sh` prints as step 7 reproduce its tables byte for byte.
-
 ## Inputs outside this repository
 
 The published analyses also used the inputs below, which no code in this repository can
@@ -189,8 +171,6 @@ available (as noted).
 |---|---|---|
 | Judge and validator verdicts (`results/`) | stages 5–7 | nothing to analyse; collect your own (stages 3–4) |
 | Human preservation labels (`data/human_validation*/`) | human-validation and inter-annotator tables | those tables print `skip` |
-| Human construct-validity verdicts (`data/human_validation_ds*/`, `data/human_validation_fairness/`) | construct-validity table (exploratory fairness track) | `status=partial` rows |
-| Construct-screen pass list (`results/v2_fairness/metrics/construct_screen_passed.json`) | D-S pool (exploratory fairness track) | produced by the paid screen |
 | I2EBench `fluxkontext` and `qwen_image_edit` outputs | I2EBench strata | a smaller I2EBench draw |
 
 ### Human validation

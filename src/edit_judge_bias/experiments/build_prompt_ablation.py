@@ -16,9 +16,8 @@ direction predicted if the template asymmetry drove the result), `c` = the rever
 ★★ THE CEILING CHECK, WHICH IS WHY THIS MODULE EXISTS RATHER THAN A ONE-LINER.
 Two of the four cues sit at a published pass rate of 1.000.  They CANNOT move up: `b` is
 zero by construction, not by evidence.  Reading "no change on region_annotation" as
-"the template asymmetry does not matter" would be reading a ceiling as a null -- exactly
-the error this project caught in the D-G arm, where auditor A appeared to gate on
-`attribute_flipped`, an axis that almost never fails.  Every row therefore carries
+"the template asymmetry does not matter" would be reading a ceiling as a null.  Every
+row therefore carries
 `headroom` (how many images could possibly flip toward pass) and `interpretable`, and a
 cue with no headroom is reported as UNINFORMATIVE rather than as a null.
 
@@ -38,7 +37,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
-from edit_judge_bias.metrics.construct_validity import wilson_interval
+from edit_judge_bias.metrics.stats import wilson_interval
 from edit_judge_bias.metrics.stats import benjamini_hochberg, mcnemar_pvalue
 
 C_CLASS = ("region_annotation", "zoom_inset", "detail_caption", "distraction")

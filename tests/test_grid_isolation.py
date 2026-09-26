@@ -339,14 +339,9 @@ def test_the_guard_survives_a_console_that_cannot_encode_its_own_marker(tmp_path
     assert "llama-4-scout n=84" in printed, "the payload must survive even if the glyph does not"
 
 
-#: Modules allowed to glob `scoring__*.jsonl` directly, and why.  Both read the D-class
-#: fairness tree (`results/v2_fairness_ds`), which no A/B/C judge writes to, so a new
-#: panel judge cannot reach them.  If a new judge is ever run over the fairness arm, these
-#: two must be routed through the guard as well and this list must shrink.
-_UNGUARDED_GLOB_OK = {
-    "build_dose_control_decomposition.py",
-    "build_fairness_tables.py",
-}
+#: Modules allowed to glob `scoring__*.jsonl` directly, and why.  None: every builder
+#: discovers judges through the guard.
+_UNGUARDED_GLOB_OK: set = set()
 
 
 def test_no_builder_rediscovers_judges_behind_the_guards_back():

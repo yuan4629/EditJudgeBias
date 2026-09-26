@@ -14,10 +14,6 @@ from edit_judge_bias.visualization.plot_claims import (
     plot_position_joint,
     plot_retest,
 )
-from edit_judge_bias.visualization.plot_fairness_ds import (
-    paired_diff_sd,
-    plot_ds_null_vs_control,
-)
 from edit_judge_bias.visualization.plot_forests import (
     plot_claim_a_dimension_forest,
     plot_claim_a_forest,
@@ -42,8 +38,6 @@ __all__ = [
     "plot_agreement_forest",
     "plot_position_joint",
     "plot_retest",
-    "paired_diff_sd",
-    "plot_ds_null_vs_control",
     "plot_claim_a_dimension_forest",
     "plot_claim_a_forest",
     "plot_claim_b_forest",

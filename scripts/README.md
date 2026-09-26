@@ -16,17 +16,6 @@ Run everything from the repository root. Each shell script `cd`s there itself an
 | `07_plot_figures.sh` | every figure | free |
 | `verify_benchmark.py {upstream,manifests,sources,images,all}` | compare a rebuild with the published fingerprints | free |
 
-## Fairness track (exploratory)
-
-These scripts run exploratory analyses that are not part of the experiments reported in the
-submitted paper.
-
-| Script | Purpose |
-|---|---|
-| `fairness_ds.sh` | skin-lightness counterfactuals (D-S): free steps, and the paid steps printed |
-| `fairness_dg.sh` | generative attribute edits (D-G), stopped at its construct gate |
-| `construct_validity.sh` | human construct-validity verdicts into a table |
-
 ## Helpers (called by the stage scripts, or run by hand)
 
 | Script | Purpose |
@@ -38,7 +27,3 @@ submitted paper.
 | `validator_draw.py {manifest,ablation-manifest,verify,backup,restore}` | reproduce the seeded validator draw; build the matched `sham` floor and the C-class ablation set |
 | `audit_mask_polarity.py` | edit-region mask audit read by the sensitivity tables |
 | `human_validation_package.py {build,status,unblind,build-iaa,kappa}` | blinded human preservation labelling |
-| `human_verdict_io.py` | export/import helper for human verdict sheets |
-| `fetch_probe_originals.py`, `fetch_edited_images.py` | fairness track: read OmniEdit images from the locked shards |
-| `stage_ds_visual_check.py` | fairness track: contact sheets for the human gate |
-| `analyze_dg_verdicts.py` | fairness track: D-G adjudication |

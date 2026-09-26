@@ -63,8 +63,6 @@ pytest -q                                             # offline; no data or API 
 The extras are:
 
 - `ingest`: downloading corpora from the Hugging Face Hub.
-- `fairness`: person/skin masks for the exploratory fairness track (torch, torchvision,
-  OpenCV).
 - `overlap`: the source-admission near-duplicate gate.
 - `perceptual`: optional LPIPS/CLIP preservation metrics.
 
@@ -76,7 +74,6 @@ configs/               YAML that drives every step (no behaviour is hard-coded)
   bias/                one file per cue (injector parameters)
   judge/               one file per judge / validator (model id, decoding settings)
   experiment/          one file per arm (which manifest, which cues, where results go)
-  fairness/            exploratory fairness track (see below)
 data/provenance/       tracked provenance metadata: benchmark fingerprints, dataset locks
 scripts/               the pipeline in stage order, plus helpers (see scripts/README.md)
 src/edit_judge_bias/   the package
@@ -86,7 +83,6 @@ src/edit_judge_bias/   the package
   prompts/             scoring, pairwise and validator prompt builders
   metrics/             scoring, pairwise, agreement and preservation metrics, statistics
   experiments/         CLI runners and table builders
-  fairness/            exploratory fairness track (see below)
   visualization/       figures
 tests/                 unit and integration tests (synthetic fixtures only)
 docs/                  datasets, reproduction guide, cue catalogue, architecture
@@ -156,13 +152,6 @@ reproducible byte for byte, and how to diagnose a mismatch:
 
 For a non-OpenAI API, implement `JudgeAdapter` (`src/edit_judge_bias/judges/base.py`) and
 add it to `build_adapter` in `judges/__init__.py`. `MockJudgeAdapter` is a minimal example.
-
-## Exploratory code
-
-The fairness track (`configs/fairness/`, `src/edit_judge_bias/fairness/`,
-`scripts/fairness_ds.sh`, `scripts/fairness_dg.sh`, `scripts/construct_validity.sh`) contains
-exploratory analyses that are not part of the experiments reported in the submitted paper.
-Stages 1–7 do not run it.
 
 ## Citation
 

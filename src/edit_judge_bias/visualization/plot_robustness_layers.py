@@ -57,8 +57,7 @@ data cannot support (0.73 rating points and Δρ 0.062 are not "the same size"
 under any defensible transform), so the top panel carries **rank only** and the
 three raw scalars are shown underneath on **three independent numeric axes**,
 one per layer, each with its own tick range and its own "more robust →"
-direction. This mirrors how F1 draws the D-S MDE ticks in units of SD(paired
-difference) with the legend stating out loud that it is NOT SD(score).
+direction.
 
 Reading the panels together is also what keeps the ordinal top panel honest: the
 bottom strips show the *spacing*, so a rank gap that is really a hair (qwen vs

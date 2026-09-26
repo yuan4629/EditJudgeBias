@@ -53,7 +53,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from edit_judge_bias.metrics.construct_validity import wilson_interval
+from edit_judge_bias.metrics.stats import wilson_interval
 from edit_judge_bias.metrics.stats import benjamini_hochberg, mcnemar_pvalue
 
 # Matches scripts/prepare_edit_damage_control.py: a mean absolute pixel change below this is not a
